@@ -54,7 +54,7 @@ The frontend now features an **AI Command Center**. Users can input complex requ
 3.  **Environment Variables**
     Update `frontend/.env` or Vercel Environment variables:
     ```env
-    VITE_GROQ_API_KEY=your_groq_api_key
+    VITE_GROQ_API_KEY=your_groq_api_key_from_dashboard
     ```
     Update root `.env`:
     ```env
