@@ -4,7 +4,7 @@
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Chain](https://img.shields.io/badge/chain-Base-blueviolet)
 
-BOT-CALL is an open-source protocol that allows AI agents or users to pay robots to perform real-world actions using the Base (Ethereum L2) blockchain.
+BOT-CALL is an open protocol that enables AI agents and robots to receive blockchain payments for performing real-world actions. Built for the emerging agentic economy where autonomous systems can participate in decentralized labor markets.
 
 ## 🚀 Architecture
 
@@ -37,7 +37,7 @@ graph TD
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/your-username/botcall-protocol.git
+   git clone https://github.com/nayrbryanGaming/botcall-protocol.git
    cd botcall-protocol
    ```
 
