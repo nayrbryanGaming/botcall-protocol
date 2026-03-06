@@ -125,20 +125,18 @@ function App() {
                 <section className="action-grid">
                     <div className={highlightAction === 'wave' ? 'highlight-pulse' : ''}>
                         <RobotActionButton
-                            label="Hire to Wave"
-                            action="wave"
-                            reward="0.001"
-                            contract={contract}
-                            onSuccess={() => loadTasks(contract)}
+                            actionName="wave"
+                            rewardEth="0.001"
+                            disabled={!contract}
+                            onActionInitiated={(txHash) => console.log('Wave initiated:', txHash)}
                         />
                     </div>
                     <div className={highlightAction === 'scan room' ? 'highlight-pulse' : ''}>
                         <RobotActionButton
-                            label="Hire to Scan Room"
-                            action="scan room"
-                            reward="0.001"
-                            contract={contract}
-                            onSuccess={() => loadTasks(contract)}
+                            actionName="scan room"
+                            rewardEth="0.001"
+                            disabled={!contract}
+                            onActionInitiated={(txHash) => console.log('Scan initiated:', txHash)}
                         />
                     </div>
                 </section>
