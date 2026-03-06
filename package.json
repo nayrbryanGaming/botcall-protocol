@@ -1,0 +1,20 @@
+{
+  "name": "botcall-protocol",
+  "version": "1.0.0",
+  "description": "A protocol for pay-per-action robotics on Base.",
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "deploy:base-sepolia": "hardhat run scripts/deploy.js --network base-sepolia",
+    "backend": "node backend/listener.js"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.8.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.1"
+  }
+}
