@@ -3,7 +3,7 @@ import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, BOT_CALL_ABI, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
 import RobotActionButton from './components/RobotActionButton';
-import './App.css';
+import './index.css';
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -12,6 +12,7 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [aiPrompt, setAiPrompt] = useState("");
     const [isAiThinking, setIsAiThinking] = useState(false);
+    const [highlightAction, setHighlightAction] = useState(null);
 
     useEffect(() => {
         if (window.ethereum) {
@@ -25,7 +26,6 @@ function App() {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             setAccount(accounts[0]);
 
-            // Request network switch to Base Sepolia
             await window.ethereum.request({
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
@@ -59,16 +59,19 @@ function App() {
         if (!aiPrompt || !contract) return;
 
         setIsAiThinking(true);
+        setHighlightAction(null);
         const action = await interpretAction(aiPrompt);
         setIsAiThinking(false);
 
         if (action) {
-            alert(`AI decided to: ${action}`);
-            // The RobotActionButton handles the transaction, but we can trigger it here too if we want.
-            // For the demo flow, we'll just encourage the user to click the button or trigger it programmatically.
+            setHighlightAction(action);
+            const msg = action === 'wave'
+                ? "AI mapping: 'WAVE' action detected! Confirm the transaction below."
+                : "AI mapping: 'SCAN' action detected! Confirm the transaction below.";
+            alert(msg);
             setAiPrompt("");
         } else {
-            alert("AI couldn't decide on an action. Try 'wave' or 'scan'.");
+            alert("AI Agent is unsure. Please try simpler commands like 'wave' or 'scan'.");
         }
     };
 
@@ -99,7 +102,6 @@ function App() {
                     <p>Request real-world actions with Base Sepolia ETH.</p>
                 </section>
 
-                {/* AI Agent Section */}
                 <section className="ai-agent-card">
                     <div className="ai-header">
                         <h3>🧠 AI COMMAND CENTER</h3>
@@ -108,7 +110,7 @@ function App() {
                     <form className="ai-form" onSubmit={handleAiCommand}>
                         <input
                             type="text"
-                            placeholder="e.g. 'clean my room' or 'say hello'..."
+                            placeholder="e.g. 'Can the robot greet the guests?'..."
                             value={aiPrompt}
                             onChange={(e) => setAiPrompt(e.target.value)}
                             disabled={isAiThinking}
@@ -117,24 +119,28 @@ function App() {
                             {isAiThinking ? "THINKING..." : "ASK AI"}
                         </button>
                     </form>
-                    <p className="ai-hint">AI Agent will interpret your command and map it to robot actions.</p>
+                    <p className="ai-hint">The AI Agent interprets your intent and maps it to on-chain robotic actions.</p>
                 </section>
 
                 <section className="action-grid">
-                    <RobotActionButton
-                        label="Hire to Wave"
-                        action="wave"
-                        reward="0.001"
-                        contract={contract}
-                        onSuccess={() => loadTasks(contract)}
-                    />
-                    <RobotActionButton
-                        label="Hire to Scan Room"
-                        action="scan room"
-                        reward="0.001"
-                        contract={contract}
-                        onSuccess={() => loadTasks(contract)}
-                    />
+                    <div className={highlightAction === 'wave' ? 'highlight-pulse' : ''}>
+                        <RobotActionButton
+                            label="Hire to Wave"
+                            action="wave"
+                            reward="0.001"
+                            contract={contract}
+                            onSuccess={() => loadTasks(contract)}
+                        />
+                    </div>
+                    <div className={highlightAction === 'scan room' ? 'highlight-pulse' : ''}>
+                        <RobotActionButton
+                            label="Hire to Scan Room"
+                            action="scan room"
+                            reward="0.001"
+                            contract={contract}
+                            onSuccess={() => loadTasks(contract)}
+                        />
+                    </div>
                 </section>
 
                 <section className="task-history">
@@ -146,28 +152,22 @@ function App() {
                             tasks.map((task, idx) => (
                                 <div key={idx} className="task-card">
                                     <div className="task-main">
-                                        <span className="task-id">#{Number(task[0])}</span>
+                                        <span className="task-id">#{task[0]?.toString() || idx}</span>
                                         <span className="task-action">{task[2]}</span>
                                     </div>
-                                    <div className={`status-badge status-${task[4]}`}>
-                                        {task[4] === 0n ? "Pending" : task[4] === 1n ? "Executing" : "Completed"}
+                                    <div className={`status-badge status-${task[4]?.toString()}`}>
+                                        {task[4]?.toString() === '0' ? "Pending" : task[4]?.toString() === '1' ? "Executing" : "Completed"}
                                     </div>
                                 </div>
                             ))
                         )}
-                        <div key={task.id.toString()} style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                                <strong>{task.action}</strong>
-                                <div style={{ fontSize: '0.8rem', color: '#888' }}>ID: {task.id.toString()} • Reward: {task.reward} ETH</div>
-                            </div>
-                            <span className={`status-badge status-${task.status.toLowerCase()}`}>
-                                {task.status}
-                            </span>
-                        </div>
-                        ))}
                     </div>
-                )}
-                </div>
+                </section>
+            </main>
+
+            <footer>
+                <p>Built with ❤️ for Agentic Robotics &bull; Base Sepolia</p>
+            </footer>
         </div>
     );
 }

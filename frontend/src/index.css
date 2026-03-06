@@ -135,6 +135,25 @@ h1 {
 }
 
 /* Rest of the styles */
+.highlight-pulse {
+  animation: pulse-glow 2s infinite;
+  border-radius: 20px;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.4);
+  }
+
+  70% {
+    box-shadow: 0 0 0 15px rgba(0, 243, 255, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 243, 255, 0);
+  }
+}
+
 footer {
   margin-top: 60px;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
