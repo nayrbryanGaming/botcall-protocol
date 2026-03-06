@@ -1,108 +1,173 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { CONTRACT_ADDRESS, BOT_CALL_ABI, BASE_SEPOLIA_CHAIN_ID } from './config';
+import { interpretAction } from './services/aiAgent';
 import RobotActionButton from './components/RobotActionButton';
-import { CONTRACT_ADDRESS, BOT_CALL_ABI } from './config';
 import './App.css';
 
 function App() {
     const [account, setAccount] = useState(null);
+    const [provider, setProvider] = useState(null);
+    const [contract, setContract] = useState(null);
     const [tasks, setTasks] = useState([]);
-    const [status, setStatus] = useState("Idle");
+    const [aiPrompt, setAiPrompt] = useState("");
+    const [isAiThinking, setIsAiThinking] = useState(false);
+
+    useEffect(() => {
+        if (window.ethereum) {
+            const p = new ethers.BrowserProvider(window.ethereum);
+            setProvider(p);
+        }
+    }, []);
 
     const connectWallet = async () => {
-        if (window.ethereum) {
-            try {
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                setAccount(accounts[0]);
-            } catch (err) {
-                console.error(err);
-            }
-        } else {
-            alert("MetaMask not detected");
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            setAccount(accounts[0]);
+
+            // Request network switch to Base Sepolia
+            await window.ethereum.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+            });
+
+            const signer = await provider.getSigner();
+            const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
+            setContract(c);
+            loadTasks(c);
+        } catch (error) {
+            console.error("Connection Error", error);
         }
     };
 
-    useEffect(() => {
-        if (account && CONTRACT_ADDRESS) {
-            setupEventListener();
-        }
-    }, [account]);
-
-    const setupEventListener = async () => {
-        const provider = new ethers.BrowserProvider(window.ethereum);
-        const contract = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, provider);
-
-        contract.on("ActionRequested", (taskId, requester, action, reward) => {
-            if (requester.toLowerCase() === account.toLowerCase()) {
-                setTasks(prev => [...prev, { id: taskId, action, status: "Pending", reward: ethers.formatEther(reward) }]);
+    const loadTasks = async (c) => {
+        try {
+            const count = await c.taskCount();
+            const loadedTasks = [];
+            for (let i = 0; i < Number(count); i++) {
+                const task = await c.tasks(i);
+                loadedTasks.push(task);
             }
-        });
+            setTasks(loadedTasks.reverse());
+        } catch (error) {
+            console.error("Load Tasks Error", error);
+        }
+    };
 
-        contract.on("ActionExecuting", (taskId) => {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: "Executing" } : t));
-        });
+    const handleAiCommand = async (e) => {
+        e.preventDefault();
+        if (!aiPrompt || !contract) return;
 
-        contract.on("ActionCompleted", (taskId) => {
-            setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: "Completed" } : t));
-        });
+        setIsAiThinking(true);
+        const action = await interpretAction(aiPrompt);
+        setIsAiThinking(false);
+
+        if (action) {
+            alert(`AI decided to: ${action}`);
+            // The RobotActionButton handles the transaction, but we can trigger it here too if we want.
+            // For the demo flow, we'll just encourage the user to click the button or trigger it programmatically.
+            setAiPrompt("");
+        } else {
+            alert("AI couldn't decide on an action. Try 'wave' or 'scan'.");
+        }
     };
 
     return (
-        <div className="App">
-            <div className="wallet-info">
-                {account ? (
-                    <span>Connected: {account.slice(0, 6)}...{account.slice(-4)}</span>
-                ) : (
-                    <button onClick={connectWallet} style={{ padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Connect Wallet</button>
-                )}
-            </div>
-
+        <div className="container">
             <header>
-                <h1>BOT-CALL</h1>
-                <p className="subtitle">On-chain protocol for real-world robotic actions</p>
+                <div className="logo-container">
+                    <span className="logo-icon">🤖</span>
+                    <h1>BOT-CALL</h1>
+                </div>
+                <p className="subtitle">Agentic Robotics Protocol</p>
+
+                {!account ? (
+                    <button className="connect-btn" onClick={connectWallet}>
+                        Connect MetaMask
+                    </button>
+                ) : (
+                    <div className="account-info">
+                        <span className="dot active"></span>
+                        {account.slice(0, 6)}...{account.slice(-4)}
+                    </div>
+                )}
             </header>
 
-            {!CONTRACT_ADDRESS && (
-                <div style={{ background: 'rgba(255,0,0,0.1)', color: '#ff4d4d', padding: '1rem', borderRadius: '10px', marginBottom: '2rem' }}>
-                    <strong>Attention:</strong> Contract not deployed yet. Please deploy the contract and update <code>config.js</code>.
-                </div>
-            )}
+            <main>
+                <section className="hero">
+                    <h2>Hire a Robot via Blockchain</h2>
+                    <p>Request real-world actions with Base Sepolia ETH.</p>
+                </section>
 
-            <div className="card-container">
-                <RobotActionButton
-                    actionName="WAVE"
-                    rewardEth="0.001"
-                    disabled={!account}
-                    onActionInitiated={(hash) => console.log("Init:", hash)}
-                />
-                <RobotActionButton
-                    actionName="SCAN ROOM"
-                    rewardEth="0.005"
-                    disabled={!account}
-                    onActionInitiated={(hash) => console.log("Init:", hash)}
-                />
-            </div>
+                {/* AI Agent Section */}
+                <section className="ai-agent-card">
+                    <div className="ai-header">
+                        <h3>🧠 AI COMMAND CENTER</h3>
+                        <span className="badge">POWERED BY LLAMA-3</span>
+                    </div>
+                    <form className="ai-form" onSubmit={handleAiCommand}>
+                        <input
+                            type="text"
+                            placeholder="e.g. 'clean my room' or 'say hello'..."
+                            value={aiPrompt}
+                            onChange={(e) => setAiPrompt(e.target.value)}
+                            disabled={isAiThinking}
+                        />
+                        <button type="submit" disabled={isAiThinking || !account}>
+                            {isAiThinking ? "THINKING..." : "ASK AI"}
+                        </button>
+                    </form>
+                    <p className="ai-hint">AI Agent will interpret your command and map it to robot actions.</p>
+                </section>
 
-            <div className="task-history" style={{ marginTop: '4rem', textAlign: 'left' }}>
-                <h2>Active Tasks</h2>
-                {tasks.length === 0 ? (
-                    <p style={{ color: '#666' }}>No actions requested yet.</p>
-                ) : (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {tasks.map(task => (
-                            <div key={task.id.toString()} style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <div>
-                                    <strong>{task.action}</strong>
-                                    <div style={{ fontSize: '0.8rem', color: '#888' }}>ID: {task.id.toString()} • Reward: {task.reward} ETH</div>
+                <section className="action-grid">
+                    <RobotActionButton
+                        label="Hire to Wave"
+                        action="wave"
+                        reward="0.001"
+                        contract={contract}
+                        onSuccess={() => loadTasks(contract)}
+                    />
+                    <RobotActionButton
+                        label="Hire to Scan Room"
+                        action="scan room"
+                        reward="0.001"
+                        contract={contract}
+                        onSuccess={() => loadTasks(contract)}
+                    />
+                </section>
+
+                <section className="task-history">
+                    <h3>Recent Robotic Tasks</h3>
+                    <div className="task-list">
+                        {tasks.length === 0 ? (
+                            <p className="empty">No tasks yet.</p>
+                        ) : (
+                            tasks.map((task, idx) => (
+                                <div key={idx} className="task-card">
+                                    <div className="task-main">
+                                        <span className="task-id">#{Number(task[0])}</span>
+                                        <span className="task-action">{task[2]}</span>
+                                    </div>
+                                    <div className={`status-badge status-${task[4]}`}>
+                                        {task[4] === 0n ? "Pending" : task[4] === 1n ? "Executing" : "Completed"}
+                                    </div>
                                 </div>
-                                <span className={`status-badge status-${task.status.toLowerCase()}`}>
-                                    {task.status}
-                                </span>
+                            ))
+                        )}
+                        <div key={task.id.toString()} style={{ background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <strong>{task.action}</strong>
+                                <div style={{ fontSize: '0.8rem', color: '#888' }}>ID: {task.id.toString()} • Reward: {task.reward} ETH</div>
                             </div>
+                            <span className={`status-badge status-${task.status.toLowerCase()}`}>
+                                {task.status}
+                            </span>
+                        </div>
                         ))}
                     </div>
                 )}
-            </div>
+                </div>
         </div>
     );
 }

@@ -1,24 +1,28 @@
 # BOT-CALL Protocol 🤖💰
 
-![Version](https://img.shields.io/badge/version-1.0.0-blue)
+![Version](https://img.shields.io/badge/version-1.1.0-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Chain](https://img.shields.io/badge/chain-Base--Sepolia-blueviolet)
 ![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)
+![AI](https://img.shields.io/badge/AI-Groq--Llama3-orange)
 
-BOT-CALL is an open protocol that enables AI agents and robots to receive blockchain payments for performing real-world actions. Built for the emerging **Agentic Robotics Economy**.
+BOT-CALL is an open protocol that enables AI agents and robots to receive blockchain payments for performing real-world actions. This MVP demonstrates the **Agentic Robotics Economy**—where AI reasons and blockchain settles.
 
-## 🚀 Architecture Overview
+## 🏗️ Architecture: The Agentic Loop
 
-The system follows a 4-tier architecture designed for low latency and high reliability:
+The system follows a 5-tier architecture:
 
-1.  **Frontend (Vercel)**: High-performance React UI for user/agent interaction.
-2.  **Smart Contract (Base L2)**: Secure, gas-efficient escrow and payment logic.
-3.  **Backend Listener (Node.js)**: Off-chain event monitor connecting blockchain to hardware.
-4.  **Robot Simulator**: A script-based execution environment simulating physical kinetics.
+1.  **AI Reasoning Layer (Groq + Llama 3)**: Interprets natural language user intent into specific robotic tasks.
+2.  **Frontend (Vercel)**: Premium Command Center for human/agent interaction.
+3.  **Smart Contract (Base L2)**: Secure, gas-efficient escrow and payment logic.
+4.  **Backend Listener (Node.js)**: Off-chain event monitor bridging blockchain to hardware.
+5.  **Robot Simulator**: Kinetic simulation of real-world physical actions.
 
 ```mermaid
 graph TD
-    User[User / AI Agent] -->|requestAction + ETH| SC[BotCall Smart Contract]
+    User[Human / User] -->|Natural Language| AI[Groq AI Agent]
+    AI -->|Interpret Action| UI[Frontend UI]
+    UI -->|requestAction + ETH| SC[BotCall Smart Contract]
     SC -->|Emit ActionRequested| BL[Backend Listener]
     BL -->|Trigger| RS[Robot Simulator]
     RS -->|Success Signal| BL
@@ -26,19 +30,12 @@ graph TD
     SC -->|Release Payment| Robot[Robot Executor]
 ```
 
-## 🤖 Robot Simulator
+## 🧠 AI Agent Command Center
 
-Since physical hardware is optional for this MVP, we use a **Robot Simulator Script** (`backend/robotSimulator.js`) to demonstrate the feedback loop.
+The frontend now features an **AI Command Center**. Users can input complex requests like *"Please scan the surroundings for obstacles"* or *"Say hello to the guests"*.
 
-- **Actions supported**: `WAVE`, `SCAN ROOM`.
-- **Logic**: Simulates actuator initialization, kinetic movement delays, and sensor success signals.
-
-## 💻 Tech Stack
-
-- **Blockchain**: Base (Ethereum L2)
-- **Smart Contract**: Solidity, Hardhat
-- **Backend**: Node.js, Ethers.js
-- **Frontend**: React, VITE, Ethers.js, Vercel
+- **LLM**: Llama-3-70B via Groq API (Inference in < 500ms).
+- **Functionality**: Maps user intent to `WAVE` or `SCAN ROOM` actions.
 
 ## ⚙️ Installation & Setup
 
@@ -55,48 +52,28 @@ Since physical hardware is optional for this MVP, we use a **Robot Simulator Scr
     ```
 
 3.  **Environment Variables**
-    Create a `.env` file in the root:
+    Update `frontend/.env` or Vercel Environment variables:
+    ```env
+    VITE_GROQ_API_KEY=your_groq_api_key
+    ```
+    Update root `.env`:
     ```env
     PRIVATE_KEY=your_private_key
-    BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
     CONTRACT_ADDRESS=0x3dB23698E922432730D7169CF79b85EA51416e49
     ```
 
 ## 🧪 Testing End-to-End
 
-Follow these steps for a full demo:
-
-1.  **Run Backend Listener** (Local Machine):
+1.  **Run Backend Listener**:
     ```bash
     npm run backend
     ```
-    *Listener will wait for ActionRequested events.*
 
-2.  **Access Frontend**:
-    Open the Vercel URL or run locally:
-    ```bash
-    cd frontend && npm run dev
-    ```
+2.  **Push to Test**:
+    Every push to the `main` branch triggers **GitHub Actions** (`.github/workflows/test.yml`) to verify smart contract integrity.
 
-3.  **Execute Action**:
-    - Connect MetaMask (Base Sepolia).
-    - Click **"Hire Robot to Wave"**.
-    - Watch the **Backend Console**: monitor "Robot waving 👋" and "Payment released".
-
-## ☁️ Vercel Deployment
-
-The frontend is optimized for Vercel:
-- **Project URL**: `botcall.vercel.app`
-- **Root Directory**: `frontend`
-- **Build Command**: `npm run build`
-- **Output Directory**: `dist`
-
-## 🛣 Future Roadmap
-
-- **AI Agent Integration**: Autonomous task planning using LLMs (e.g., Groq Llama 3).
-- **Task Verification Oracles**: Decentralized proof of physical work.
-- **Robot Marketplace**: Discover and compare robot capabilities.
-- **Hardware APIs**: Integration with ROS (Robot Operating System).
+3.  **Deploy Frontend**:
+    Connect your GitHub repo to Vercel, set root to `frontend`, and define `VITE_GROQ_API_KEY`.
 
 ## 📄 License
 This project is licensed under the MIT License.
