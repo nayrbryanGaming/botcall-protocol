@@ -21,41 +21,50 @@ if (!contractAddress) {
 const botCallContract = new ethers.Contract(contractAddress, BOT_CALL_ABI, wallet);
 
 async function main() {
-    console.log("BOT-CALL Backend Listener started...");
+    console.log("-----------------------------------------");
+    console.log("🤖 BOT-CALL Backend Listener v1.1.0");
     console.log(`Monitoring contract: ${contractAddress}`);
-    console.log(`Using executor address: ${wallet.address}`);
+    console.log(`Using executor: ${wallet.address}`);
+    console.log("-----------------------------------------");
 
-    botCallContract.on("ActionRequested", async (taskId, requester, action, reward, event) => {
-        console.log(`-----------------------------------------`);
-        console.log(`New Action Requested!`);
-        console.log(`Task ID: ${taskId}`);
-        console.log(`Requester: ${requester}`);
-        console.log(`Action: ${action}`);
-        console.log(`Reward: ${ethers.formatEther(reward)} ETH`);
+    const setupListener = () => {
+        botCallContract.on("ActionRequested", async (taskId, requester, action, reward) => {
+            console.log(`\n[EVENT] New Action Requested!`);
+            console.log(`Task ID: ${taskId} | Action: ${action} | Reward: ${ethers.formatEther(reward)} ETH`);
 
-        try {
-            // 1. Mark as executing on-chain
-            console.log("[BACKEND] Updating status to 'Executing'...");
-            const txStart = await botCallContract.startExecuting(taskId);
-            await txStart.wait();
-            console.log("[BACKEND] Status updated on-chain.");
+            try {
+                // 1. Mark as executing on-chain
+                process.stdout.write("[BACKEND] Updating status... ");
+                const txStart = await botCallContract.startExecuting(taskId);
+                await txStart.wait();
+                console.log("DONE");
 
-            // 2. Trigger Robot Simulator
-            const success = await executeAction(action);
+                // 2. Trigger Robot Simulator
+                const success = await executeAction(action);
 
-            if (success) {
-                // 3. Mark as completed and release payment
-                console.log("[BACKEND] Task successful. Calling completeAction...");
-                const txComplete = await botCallContract.completeAction(taskId);
-                await txComplete.wait();
-                console.log("[BACKEND] Task completed! Payment released.");
+                if (success) {
+                    // 3. Mark as completed and release payment
+                    process.stdout.write("[BACKEND] Task success. Releasing payment... ");
+                    const txComplete = await botCallContract.completeAction(taskId);
+                    await txComplete.wait();
+                    console.log("DONE! ETH transferred.");
+                }
+            } catch (error) {
+                console.log("FAILED");
+                console.error("[ERROR] Processing failed:", error.reason || error.message);
             }
-        } catch (error) {
-            console.error("[BACKEND] Error processing task:", error.message);
-        }
+        });
+    };
+
+    setupListener();
+
+    // Reconnection logic for long-running processes
+    provider.on("error", (e) => {
+        console.error("[NETWORK ERROR] Lost connection. Attempting to restart listener...");
+        setTimeout(main, 5000);
     });
 
-    // Keep script running
+    console.log("Listening for robotic tasks...");
     process.stdin.resume();
 }
 
