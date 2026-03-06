@@ -59,7 +59,7 @@ The frontend now features an **AI Command Center**. Users can input complex requ
     Update root `.env`:
     ```env
     PRIVATE_KEY=your_private_key
-    CONTRACT_ADDRESS=0x3dB23698E922432730D7169CF79b85EA51416e49
+    CONTRACT_ADDRESS=0x4F04EfA6d4303B3e47e55B3b955C3979Fe792cC52
     ```
 
 ## 🧪 Testing End-to-End
