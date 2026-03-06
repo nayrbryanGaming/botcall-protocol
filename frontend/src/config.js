@@ -1,12 +1,17 @@
-export const CONTRACT_ADDRESS = "0x2063De8C7422273Dce0560C49F6efF9ba9f52402"; // Base Sepolia
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 
 export const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532
 
 export const BOT_CALL_ABI = [
     "function requestAction(string action) external payable",
-    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward)",
-    "event ActionExecuting(uint256 indexed taskId)",
+    "event ActionExecuting(uint256 indexed taskId, address indexed executor)",
     "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward)",
-    "function tasks(uint256) view returns (uint256 id, address requester, string action, uint256 reward, uint8 status)",
-    "function taskCount() view returns (uint256)"
+    "event ActionCancelled(uint256 indexed taskId)",
+    "event RobotRegistered(address indexed robot, string metadata)",
+    "function tasks(uint256) view returns (uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)",
+    "function robots(address) view returns (bool isRegistered, string metadata, uint256 tasksCompleted)",
+    "function taskCount() view returns (uint256)",
+    "function registerRobot(string _metadata) external",
+    "function startExecuting(uint256 _taskId) external",
+    "function cancelTask(uint256 _taskId) external"
 ];

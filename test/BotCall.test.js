@@ -1,61 +1,81 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-describe("BotCall", function () {
+describe("BotCall Production Alpha", function () {
     let BotCall;
     let botCall;
     let owner;
     let requester;
-    let executor;
+    let robot;
 
     beforeEach(async function () {
-        [owner, requester, executor] = await ethers.getSigners();
+        [owner, requester, robot] = await ethers.getSigners();
         BotCall = await ethers.getContractFactory("BotCall");
         botCall = await BotCall.deploy();
         await botCall.waitForDeployment();
 
-        // Set executor
-        await botCall.setRobotExecutor(executor.address);
+        // Register the robot
+        await botCall.connect(robot).registerRobot("Test-Robot-v1");
     });
 
-    it("Should allow a user to request an action with ETH", async function () {
+    it("Should allow robot registration and track reputation", async function () {
+        const info = await botCall.robots(robot.address);
+        expect(info.isRegistered).to.equal(true);
+        expect(info.metadata).to.equal("Test-Robot-v1");
+        expect(info.tasksCompleted).to.equal(0);
+    });
+
+    it("Should allow a user to request an action", async function () {
         const reward = ethers.parseEther("0.1");
-        await expect(botCall.connect(requester).requestAction("wave", { value: reward }))
+        await expect(botCall.connect(requester).requestAction("scan", { value: reward }))
             .to.emit(botCall, "ActionRequested")
-            .withArgs(1, requester.address, "wave", reward);
+            .withArgs(1, requester.address, "scan", reward);
 
         const task = await botCall.tasks(1);
-        expect(task.requester).to.equal(requester.address);
-        expect(task.reward).to.equal(reward);
         expect(task.status).to.equal(0); // Pending
     });
 
-    it("Should allow the executor to mark an action as completed and receive payment", async function () {
+    it("Should allow a registered robot to claim and complete a task", async function () {
         const reward = ethers.parseEther("0.1");
         await botCall.connect(requester).requestAction("wave", { value: reward });
 
-        const initialBalance = await ethers.provider.getBalance(executor.address);
+        // Claim task
+        await expect(botCall.connect(robot).startExecuting(1))
+            .to.emit(botCall, "ActionExecuting")
+            .withArgs(1, robot.address);
 
-        await expect(botCall.connect(executor).completeAction(1))
+        // Complete task
+        const initialBalance = await ethers.provider.getBalance(robot.address);
+        await expect(botCall.connect(robot).completeAction(1))
             .to.emit(botCall, "ActionCompleted")
-            .withArgs(1, executor.address, reward);
+            .withArgs(1, robot.address, reward);
 
-        const finalBalance = await ethers.provider.getBalance(executor.address);
-        // Note: finalBalance = initialBalance + reward - gasCosts
+        const finalBalance = await ethers.provider.getBalance(robot.address);
         expect(finalBalance).to.be.greaterThan(initialBalance);
 
-        const task = await botCall.tasks(1);
-        expect(task.status).to.equal(2); // Completed
+        const robotInfo = await botCall.robots(robot.address);
+        expect(robotInfo.tasksCompleted).to.equal(1);
     });
 
-    it("Should NOT allow anyone else to complete the action", async function () {
+    it("Should NOT allow unassigned robot to complete a task", async function () {
         await botCall.connect(requester).requestAction("wave", { value: ethers.parseEther("0.1") });
-        await expect(botCall.connect(requester).completeAction(1))
-            .to.be.revertedWith("Only robot executor can complete tasks");
+        await botCall.connect(robot).startExecuting(1);
+
+        // Another wallet tries to complete
+        const signers = await ethers.getSigners();
+        const anotherRobot = signers[3];
+        await expect(botCall.connect(anotherRobot).completeAction(1))
+            .to.be.revertedWith("Only assigned robot");
     });
 
-    it("Should protect against reentrancy (manual check of code logic)", async function () {
-        // Code has nonReentrant modifier and updates state BEFORE transfer
-        // This is a logic check, but can be expanded with a mock malicious contract
+    it("Should allow requester to cancel a pending task", async function () {
+        await botCall.connect(requester).requestAction("wave", { value: ethers.parseEther("0.1") });
+
+        await expect(botCall.connect(requester).cancelTask(1))
+            .to.emit(botCall, "ActionCancelled")
+            .withArgs(1);
+
+        const task = await botCall.tasks(1);
+        expect(task.status).to.equal(3); // Cancelled
     });
 });

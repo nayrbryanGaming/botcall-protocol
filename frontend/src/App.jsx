@@ -26,10 +26,13 @@ function App() {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             setAccount(accounts[0]);
 
-            await window.ethereum.request({
-                method: 'wallet_switchEthereumChain',
-                params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
-            });
+            const network = await provider.getNetwork();
+            if (network.chainId !== BigInt(BASE_SEPOLIA_CHAIN_ID)) {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+                });
+            }
 
             const signer = await provider.getSigner();
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
@@ -40,11 +43,24 @@ function App() {
         }
     };
 
-    const loadTasks = async (c) => {
+    const [terminalLogs, setTerminalLogs] = useState([
+        "> Initializing BOT-CALL Protocol v1.2.0...",
+        "> Connection secure: BASE SEPOLIA",
+        "> Robot Node PROD-01 detected: Llama-3 Brain Online",
+        "> System Ready: Waiting for Mission Parameters..."
+    ]);
+
+    const addTerminalLog = (msg) => {
+        setTerminalLogs(prev => [...prev.slice(-9), `> ${msg}`]);
+    };
+
+    const loadTasks = async (contractInstance) => {
         try {
-            const count = await c.taskCount();
+            const count = await contractInstance.taskCount();
             const loadedTasks = [];
-            for (let i = 0; i < Number(count); i++) {
+            // Load last 10 tasks for performance
+            const start = Number(count) > 10 ? Number(count) - 9 : 1;
+            for (let i = start; i <= Number(count); i++) {
                 const task = await c.tasks(i);
                 loadedTasks.push(task);
             }
@@ -56,37 +72,75 @@ function App() {
 
     const handleAiCommand = async (e) => {
         e.preventDefault();
-        if (!aiPrompt || !contract) return;
+        if (!aiPrompt || !account) return;
 
         setIsAiThinking(true);
-        setHighlightAction(null);
-        const action = await interpretAction(aiPrompt);
-        setIsAiThinking(false);
+        addTerminalLog(`RECEIVED MISSION COMMAND: "${aiPrompt}"`);
+        addTerminalLog("AI AGENT: Initiating reasoning sequence (Groq Llama-3)...");
 
-        if (action) {
-            setHighlightAction(action);
-            const msg = action === 'wave'
-                ? "AI mapping: 'WAVE' action detected! Confirm the transaction below."
-                : "AI mapping: 'SCAN' action detected! Confirm the transaction below.";
-            alert(msg);
-            setAiPrompt("");
-        } else {
-            alert("AI Agent is unsure. Please try simpler commands like 'wave' or 'scan'.");
+        try {
+            const action = await interpretAction(aiPrompt); // Assuming interpretAction is the intended function, not getRobotAction
+            addTerminalLog(`AI BRAIN: Command interpreted as "${action.toUpperCase()}"`);
+
+            if (action !== 'unknown') {
+                addTerminalLog(`MISSION PREPARED: Initiating on-chain request for ${action}...`);
+                setHighlightAction(action);
+                setTimeout(() => setHighlightAction(null), 3000);
+            } else {
+                addTerminalLog("AI BRAIN WARNING: Command unrecognized by current actuator set.");
+            }
+        } catch (error) {
+            addTerminalLog("PROTOCOL ERROR: AI Reasoning failure.");
+            console.error(error);
+        }
+        setIsAiThinking(false);
+        setAiPrompt('');
+    };
+
+    const handleCancelTask = async (taskId) => {
+        if (!contract) return;
+        try {
+            const tx = await contract.cancelTask(taskId);
+            await tx.wait();
+            loadTasks(contract);
+        } catch (error) {
+            console.error("Cancel Task Error", error);
         }
     };
 
     return (
-        <div className="container">
+        <div className="app-wrapper">
+            <div className="protocol-status-bar">
+                <div className="status-item">
+                    <span className="status-label">PROTOCOL</span>
+                    <span className="status-value pulse-green">ACTIVE (v1.2.0-alpha)</span>
+                </div>
+                <div className="status-item">
+                    <span className="status-label">NETWORK</span>
+                    <span className="status-value">BASE SEPOLIA</span>
+                </div>
+                <div className="status-item">
+                    <span className="status-label">NODES</span>
+                    <span className="status-value">1 ACTIVE (PROD-01)</span>
+                </div>
+                <div className="status-item hide-mobile">
+                    <span className="status-label">UPTIME</span>
+                    <span className="status-value">99.9%</span>
+                </div>
+            </div>
+
             <header>
                 <div className="logo-container">
                     <span className="logo-icon">🤖</span>
-                    <h1>BOT-CALL</h1>
+                    <div>
+                        <h1>BOT-CALL</h1>
+                        <p className="subtitle">Agentic Robotics Protocol</p>
+                    </div>
                 </div>
-                <p className="subtitle">Agentic Robotics Protocol</p>
 
                 {!account ? (
                     <button className="connect-btn" onClick={connectWallet}>
-                        Connect MetaMask
+                        Connect Wallet
                     </button>
                 ) : (
                     <div className="account-info">
@@ -98,63 +152,96 @@ function App() {
 
             <main>
                 <section className="hero">
-                    <h2>Hire a Robot via Blockchain</h2>
-                    <p>Request real-world actions with Base Sepolia ETH.</p>
+                    <h2>Hire a Robot <br /> via Blockchain</h2>
+                    <p>On-chain payment. Real-world execution.</p>
                 </section>
 
-                <section className="ai-agent-card">
-                    <div className="ai-header">
-                        <h3>🧠 AI COMMAND CENTER</h3>
-                        <span className="badge">POWERED BY LLAMA-3</span>
+                <section className="ai-agent-card glass">
+                    <div className={`ai-header ${isAiThinking ? 'thinking-glow' : ''}`}>
+                        <h3>🧠 {isAiThinking ? 'AI IS THINKING...' : 'AI BRAIN INTERFACE'}</h3>
+                        <span className="badge">{isAiThinking ? 'PROCESSING' : 'LLAMA-3 AGENT'}</span>
                     </div>
                     <form className="ai-form" onSubmit={handleAiCommand}>
                         <input
                             type="text"
-                            placeholder="e.g. 'Can the robot greet the guests?'..."
+                            placeholder="Type a command (e.g., 'Say hello to the world')..."
                             value={aiPrompt}
                             onChange={(e) => setAiPrompt(e.target.value)}
                             disabled={isAiThinking}
                         />
-                        <button type="submit" disabled={isAiThinking || !account}>
-                            {isAiThinking ? "THINKING..." : "ASK AI"}
+                        <button className="connect-btn" type="submit" disabled={isAiThinking || !account}>
+                            {isAiThinking ? "PROCESSING..." : "PROCESS"}
                         </button>
                     </form>
-                    <p className="ai-hint">The AI Agent interprets your intent and maps it to on-chain robotic actions.</p>
+                </section>
+
+                <section className="robot-terminal glass">
+                    <div className="terminal-header">
+                        <span className="terminal-dot red"></span>
+                        <span className="terminal-dot orange"></span>
+                        <span className="terminal-dot green"></span>
+                        <span className="terminal-title">ROBOT_NODE_PROD_01 &gt; INTERNAL_FEED</span>
+                    </div>
+                    <div className="terminal-body">
+                        {terminalLogs.map((log, i) => (
+                            <div key={i} className="terminal-line">{log}</div>
+                        ))}
+                    </div>
                 </section>
 
                 <section className="action-grid">
                     <div className={highlightAction === 'wave' ? 'highlight-pulse' : ''}>
                         <RobotActionButton
                             actionName="wave"
-                            rewardEth="0.001"
+                            rewardEth="0.0001"
                             disabled={!contract}
-                            onActionInitiated={(txHash) => console.log('Wave initiated:', txHash)}
+                            onActionInitiated={() => loadTasks(contract)}
                         />
                     </div>
                     <div className={highlightAction === 'scan room' ? 'highlight-pulse' : ''}>
                         <RobotActionButton
                             actionName="scan room"
-                            rewardEth="0.001"
+                            rewardEth="0.0002"
                             disabled={!contract}
-                            onActionInitiated={(txHash) => console.log('Scan initiated:', txHash)}
+                            onActionInitiated={() => loadTasks(contract)}
                         />
                     </div>
                 </section>
 
                 <section className="task-history">
-                    <h3>Recent Robotic Tasks</h3>
+                    <h3>LIVE ROBOTIC FEED</h3>
                     <div className="task-list">
                         {tasks.length === 0 ? (
-                            <p className="empty">No tasks yet.</p>
+                            <p className="empty">Initializing feed...</p>
                         ) : (
                             tasks.map((task, idx) => (
-                                <div key={idx} className="task-card">
-                                    <div className="task-main">
-                                        <span className="task-id">#{task[0]?.toString() || idx}</span>
-                                        <span className="task-action">{task[2]}</span>
+                                <div key={idx} className="task-card glass">
+                                    <div className="task-info">
+                                        <div className="task-main">
+                                            <span className="task-id">TASK #{task[0]?.toString()}</span>
+                                            <span className="task-action">{task[3].toUpperCase()}</span>
+                                        </div>
+                                        <div className="task-meta">
+                                            {task[2] !== '0x0000000000000000000000000000000000000000' && (
+                                                <span className="executor-pill">🤖 {task[2].slice(0, 6)}...</span>
+                                            )}
+                                            <span className="time-pill">⏰ {new Date(Number(task[6]) * 1000).toLocaleTimeString()}</span>
+                                        </div>
                                     </div>
-                                    <div className={`status-badge status-${task[4]?.toString()}`}>
-                                        {task[4]?.toString() === '0' ? "Pending" : task[4]?.toString() === '1' ? "Executing" : "Completed"}
+                                    <div className="task-controls">
+                                        <div className={`status-badge status-${task[5]?.toString()}`}>
+                                            {task[5]?.toString() === '0' ? "Pending" :
+                                                task[5]?.toString() === '1' ? "Executing" :
+                                                    task[5]?.toString() === '2' ? "Completed" : "Cancelled"}
+                                        </div>
+                                        {task[5]?.toString() === '0' && task[1].toLowerCase() === account?.toLowerCase() && (
+                                            <button
+                                                className="cancel-btn"
+                                                onClick={() => handleCancelTask(task[0])}
+                                            >
+                                                Cancel
+                                            </button>
+                                        )}
                                     </div>
                                 </div>
                             ))
@@ -164,7 +251,7 @@ function App() {
             </main>
 
             <footer>
-                <p>Built with ❤️ for Agentic Robotics &bull; Base Sepolia</p>
+                <p>&copy; 2026 BOT-CALL PROTOCOL &bull; SECURED BY BASE</p>
             </footer>
         </div>
     );

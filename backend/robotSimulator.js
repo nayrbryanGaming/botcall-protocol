@@ -6,29 +6,31 @@
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function executeAction(action) {
-    console.log(`\n[ROBOT] Received task: ${action}`);
+    console.log(`\n🤖 [ROBOT] >>> Incoming Command: ${action.toUpperCase()}`);
+    console.log(`[ROBOT] System Status: NOMINAL | Battery: 98% | Connection: STABLE`);
 
     switch (action.toLowerCase()) {
         case "wave":
-            console.log("[ROBOT] Initializing actuators...");
+            console.log("[ROBOT] Calibrating 7-DOF arm actuators...");
             await sleep(2000);
-            console.log("[ROBOT] Action: Waving hand...");
+            console.log("[ROBOT] ACTION: Executing friendly wave gesture 👋");
             await sleep(3000);
-            console.log("[ROBOT] Action completed: Wave successful.");
+            console.log("[ROBOT] RESULT: Gesture completed successfully.");
             return true;
 
         case "scan room":
-            console.log("[ROBOT] Powering up LIDAR sensors...");
+            console.log("[ROBOT] Deploying high-resolution LIDAR array...");
             await sleep(2000);
-            console.log("[ROBOT] Action: Scanning environment...");
+            console.log("[ROBOT] ACTION: 360-degree environmental mapping in progress 📷");
             await sleep(5000);
-            console.log("[ROBOT] Action completed: Map generated.");
+            console.log("[ROBOT] RESULT: Point cloud data stored to local buffer.");
             return true;
 
         default:
-            console.log(`[ROBOT] Action "${action}" not recognized. Performing generic calibration...`);
+            console.log(`[ROBOT] WARNING: Command "${action}" not in standard library.`);
+            console.log("[ROBOT] ACTION: Initializing generic cognitive response...");
             await sleep(3000);
-            console.log("[ROBOT] Generic action completed.");
+            console.log("[ROBOT] RESULT: Process complete.");
             return true;
     }
 }

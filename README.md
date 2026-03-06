@@ -1,80 +1,149 @@
-# BOT-CALL Protocol 🤖💰
+# BOT-CALL Protocol
 
-![Version](https://img.shields.io/badge/version-1.1.0-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
-![Chain](https://img.shields.io/badge/chain-Base--Sepolia-blueviolet)
-![Frontend](https://img.shields.io/badge/Frontend-Vercel-black?logo=vercel)
-![AI](https://img.shields.io/badge/AI-Groq--Llama3-orange)
+**BOT-CALL** is an open protocol that enables robots and AI agents to receive blockchain payments for performing real-world actions.
 
-BOT-CALL is an open protocol that enables AI agents and robots to receive blockchain payments for performing real-world actions. This MVP demonstrates the **Agentic Robotics Economy**—where AI reasons and blockchain settles.
+The project introduces a new concept called **Pay-Per-Action Robotics**, where users or autonomous agents can request real-world robotic actions and automatically release payment once the task is completed.
 
-## 🏗️ Architecture: The Agentic Loop
+BOT-CALL aims to become the **economic coordination layer for the Agentic Economy**, where AI agents, robots, and humans interact through decentralized infrastructure.
 
-The system follows a 5-tier architecture:
+---
 
-1.  **AI Reasoning Layer (Groq + Llama 3)**: Interprets natural language user intent into specific robotic tasks.
-2.  **Frontend (Vercel)**: Premium Command Center for human/agent interaction.
-3.  **Smart Contract (Base L2)**: Secure, gas-efficient escrow and payment logic.
-4.  **Backend Listener (Node.js)**: Off-chain event monitor bridging blockchain to hardware.
-5.  **Robot Simulator**: Kinetic simulation of real-world physical actions.
+## 🏛️ System Architecture
+
+BOT-CALL utilizes a multi-layer infrastructure to bridge the gap between digital intent and physical action.
 
 ```mermaid
 graph TD
-    User[Human / User] -->|Natural Language| AI[Groq AI Agent]
-    AI -->|Interpret Action| UI[Frontend UI]
-    UI -->|requestAction + ETH| SC[BotCall Smart Contract]
-    SC -->|Emit ActionRequested| BL[Backend Listener]
-    BL -->|Trigger| RS[Robot Simulator]
-    RS -->|Success Signal| BL
-    BL -->|completeAction| SC
-    SC -->|Release Payment| Robot[Robot Executor]
+    User((User/AI Agent)) -->|Sends Command + ETH| SC[Smart Contract: BotCall.sol]
+    SC -->|Emits ActionRequested| BL[Backend Listener]
+    BL -->|Authenticates & Reasons| GroqAI[Llama-3 Agent Brain]
+    GroqAI -->|Validates Action| RS[Robot Simulator/Executor]
+    RS -->|Signals Completion| BL
+    BL -->|Calls completeAction| SC
+    SC -->|Releases ETH Reward| ExecutorWallet((Robot Wallet))
+    
+    subgraph "Blockchain Layer (Base Sepolia)"
+    SC
+    end
+    
+    subgraph "Intelligent Logic Layer"
+    BL
+    GroqAI
+    end
+    
+    subgraph "Physical/Simulation Layer"
+    RS
+    end
 ```
 
-## 🧠 AI Agent Command Center
+---
 
-The frontend now features an **AI Command Center**. Users can input complex requests like *"Please scan the surroundings for obstacles"* or *"Say hello to the guests"*.
+## 🌟 Vision
 
-- **LLM**: Llama-3-70B via Groq API (Inference in < 500ms).
-- **Functionality**: Maps user intent to `WAVE` or `SCAN ROOM` actions.
+The future will include millions of autonomous systems: AI agents, service robots, delivery robots, and IoT devices. However, these systems currently **cannot participate directly in economic systems**. They cannot accept decentralized tasks or receive direct payments.
 
-## ⚙️ Installation & Setup
+BOT-CALL provides the missing infrastructure. It enables robots and AI agents to:
+- Accept on-chain job requests.
+- Execute actions.
+- Automatically receive payments via smart contracts.
 
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/nayrbryanGaming/botcall-protocol.git
-    cd botcall-protocol
-    ```
+---
 
-2.  **Install Dependencies**
-    ```bash
-    npm install
-    cd frontend && npm install && cd ..
-    ```
+## 🦾 Core Concept
 
-3.  **Environment Variables**
-    Update `frontend/.env` or Vercel Environment variables:
-    ```env
-    VITE_GROQ_API_KEY=your_groq_api_key_from_dashboard
-    ```
-    Update root `.env`:
-    ```env
-    PRIVATE_KEY=your_private_key
-    CONTRACT_ADDRESS=0x4F04EfA6d4303B3e47e55B3b955C3979Fe792cC52
-    ```
+The BOT-CALL workflow is simple and trustless:
+1. **Request:** User/Agent requests a robotic action and escrows the ETH reward.
+2. **Assign:** A registered robot claims the task on-chain.
+3. **Reason:** The robot's AI brain (Llama-3) interprets the request.
+4. **Actuate:** The robot (or simulator) performs the physical task.
+5. **Release:** Upon completion, payment is released to the robot wallet.
 
-## 🧪 Testing End-to-End
+---
 
-1.  **Run Backend Listener**:
-    ```bash
-    npm run backend
-    ```
+## 🛠️ Technology Stack
 
-2.  **Push to Test**:
-    Every push to the `main` branch triggers **GitHub Actions** (`.github/workflows/test.yml`) to verify smart contract integrity.
+| Component | Technology |
+| :--- | :--- |
+| **Smart Contracts** | Solidity (Hardhat) |
+| **Blockchain** | Base (Ethereum L2) |
+| **AI Reasoning** | Groq SDK (Llama-3 70B) |
+| **Backend** | Node.js, Ethers.js |
+| **Frontend** | React, Vite, Glassmorphism CSS |
 
-3.  **Deploy Frontend**:
-    Connect your GitHub repo to Vercel, set root to `frontend`, and define `VITE_GROQ_API_KEY`.
+---
 
-## 📄 License
-This project is licensed under the MIT License.
+## 📂 Repository Structure
 
+```text
+botcall-protocol/
+├── contracts/        # BotCall.sol (Production Alpha)
+├── backend/          # Node.js event listener & robot brain
+│   ├── listener.js   # Protocol event handler
+│   └── robotSimulator.js # Actuator logic
+├── frontend/         # React Mission Control Dashboard
+├── scripts/          # Deployment & maintenance scripts
+├── test/             # Hardhat logic verification suite
+└── README.md
+```
+
+---
+
+## 🚀 Installation & Setup
+
+### 1. Clone & Install
+```bash
+git clone https://github.com/nayrbryanGaming/botcall-protocol
+cd botcall-protocol
+npm install
+cd frontend && npm install
+```
+
+### 2. Environment Configuration
+Create a `.env` in the root:
+```env
+PRIVATE_KEY=your_key
+BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
+CONTRACT_ADDRESS=0xC276eea9a0A357999f4FccC0d649B569DCBDd133
+GROQ_API_KEY=your_groq_key
+```
+
+---
+
+## 🚢 Deployment
+
+### Smart Contract
+Deployed on **Base Sepolia**: `0xC276eea9a0A357999f4FccC0d649B569DCBDd133`
+To re-deploy:
+```bash
+npm run deploy:base-sepolia
+```
+
+### Frontend (Vercel)
+Connect your repo to Vercel. Set `VITE_` prefixed environment variables matching the `.env` above.
+
+### Backend Listener
+```bash
+npm run backend
+```
+The listener will autonomously **register** itself as a robot upon first run.
+
+---
+
+## 🛣️ Roadmap
+
+- [x] **Phase 1: Protocol MVP** — On-chain escrow & simulation.
+- [x] **Phase 2: AI Brain** — Llama-3 reasoning integration.
+- [x] **Phase 3: Production Alpha** — Robot registration & reputation tracking.
+- [ ] **Phase 4: Hardware SDK** — Full ROS/Humanoid integration.
+- [ ] **Phase 5: Marketplace** — Decentralized task coordination for autonomous fleets.
+
+---
+
+## 🛡️ Security & Disclaimer
+
+BOT-CALL includes reentrancy protection and role-based completion logic. However, this is a **Production Alpha** prototype. Security audits are recommended before any mainnet deployment.
+
+---
+
+**Tagline:** *Stripe for Robots.*  
+**Contact:** [nayrbryanGaming](https://github.com/nayrbryanGaming)
