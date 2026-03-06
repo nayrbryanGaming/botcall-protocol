@@ -1,4 +1,4 @@
-export const CONTRACT_ADDRESS = "0x3dB23698E922432730D7169CF79b85EA51416e49"; // Base Sepolia
+export const CONTRACT_ADDRESS = "0x789b91e9b6743A94D4dBf9B0349b179a23F99"; // Base Sepolia
 export const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532
 
 export const BOT_CALL_ABI = [
