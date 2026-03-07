@@ -15,7 +15,10 @@ export const interpretAction = async (userPrompt) => {
             messages: [
                 {
                     role: "system",
-                    content: "You are the brain of a BOT-CALL robot. Your goal is to map user natural language requests to one of these valid robot actions: 'wave' or 'scan room'. Only return the action name as a string, no other text."
+                    content: `You are the brain of the BOT-CALL robot protocol. 
+                    Interpret the user's intent and map it to an action: 'wave' or 'scan room'.
+                    Also provide a one-sentence high-tech reasoning.
+                    Return JSON: { "action": "action_name", "reason": "reasoning" }`
                 },
                 {
                     role: "user",
@@ -23,17 +26,22 @@ export const interpretAction = async (userPrompt) => {
                 }
             ],
             model: "llama3-70b-8192",
+            response_format: { type: "json_object" }
         });
 
-        const action = completion.choices[0]?.message?.content?.toLowerCase().trim();
+        const data = JSON.parse(completion.choices[0]?.message?.content || "{}");
+        let action = data.action?.toLowerCase() || "wave";
 
-        // Validation to ensure only known actions are returned
-        if (action.includes("wave")) return "wave";
-        if (action.includes("scan")) return "scan room";
+        // Validation
+        if (action.includes("scan")) action = "scan room";
+        else action = "wave";
 
-        return "wave"; // Default to wave if unclear
+        return {
+            action,
+            reason: data.reason || "Executing standard robotic procedure."
+        };
     } catch (error) {
         console.error("AI Agent Error:", error);
-        return null;
+        return { action: "wave", reason: "AI fallback engaged." };
     }
 };

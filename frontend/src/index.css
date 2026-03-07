@@ -352,6 +352,85 @@ h1 {
   }
 }
 
+/* Mission Proposal Support */
+.mission-proposal {
+  background: rgba(112, 0, 255, 0.05);
+  border: 1px solid rgba(112, 0, 255, 0.3);
+  padding: 24px;
+  margin-bottom: 4rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.proposal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.proposal-header h3 {
+  font-size: 0.9rem;
+  color: var(--primary);
+  letter-spacing: 2px;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.proposal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.proposal-row {
+  display: flex;
+  gap: 12px;
+  font-family: monospace;
+}
+
+.proposal-row .label {
+  color: var(--text-dim);
+  min-width: 100px;
+}
+
+.proposal-row .value {
+  color: #fff;
+}
+
+.glow-text-small {
+  text-shadow: 0 0 10px var(--primary);
+  font-weight: bold;
+}
+
+.italics {
+  font-style: italic;
+  color: var(--text-dim);
+}
+
+.neon-alt {
+  color: #00ff88;
+  font-weight: bold;
+}
+
+.proposal-footer {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-end;
+}
+
+.connect-btn.secondary {
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+}
+
 .task-history h3 {
   font-size: 1rem;
   color: var(--text-dim);

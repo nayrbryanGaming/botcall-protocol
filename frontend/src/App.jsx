@@ -21,6 +21,8 @@ function App() {
         }
     }, []);
 
+    const [missionProposal, setMissionProposal] = useState(null);
+
     const connectWallet = async () => {
         try {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -55,13 +57,13 @@ function App() {
     };
 
     const loadTasks = async (contractInstance) => {
+        if (!contractInstance) return;
         try {
             const count = await contractInstance.taskCount();
             const loadedTasks = [];
-            // Load last 10 tasks for performance
             const start = Number(count) > 10 ? Number(count) - 9 : 1;
             for (let i = start; i <= Number(count); i++) {
-                const task = await c.tasks(i);
+                const task = await contractInstance.tasks(i); // FIXED BUG: was 'c'
                 loadedTasks.push(task);
             }
             setTasks(loadedTasks.reverse());
@@ -79,22 +81,45 @@ function App() {
         addTerminalLog("AI AGENT: Initiating reasoning sequence (Groq Llama-3)...");
 
         try {
-            const action = await interpretAction(aiPrompt); // Assuming interpretAction is the intended function, not getRobotAction
-            addTerminalLog(`AI BRAIN: Command interpreted as "${action.toUpperCase()}"`);
+            const result = await interpretAction(aiPrompt);
+            addTerminalLog(`AI BRAIN: Command interpreted as "${result.action.toUpperCase()}"`);
+            addTerminalLog(`AI REASONING: ${result.reason}`);
 
-            if (action !== 'unknown') {
-                addTerminalLog(`MISSION PREPARED: Initiating on-chain request for ${action}...`);
-                setHighlightAction(action);
-                setTimeout(() => setHighlightAction(null), 3000);
-            } else {
-                addTerminalLog("AI BRAIN WARNING: Command unrecognized by current actuator set.");
-            }
+            setMissionProposal({
+                action: result.action,
+                reason: result.reason,
+                reward: result.action === 'wave' ? '0.0001' : '0.0002'
+            });
+
+            addTerminalLog("MISSION PROPOSAL GENERATED. Awaiting user authorization...");
+
         } catch (error) {
             addTerminalLog("PROTOCOL ERROR: AI Reasoning failure.");
             console.error(error);
         }
         setIsAiThinking(false);
         setAiPrompt('');
+    };
+
+    const executeMission = async () => {
+        if (!missionProposal || !contract) return;
+        const { action, reward } = missionProposal;
+
+        addTerminalLog(`USER AUTHORIZED MISSION: ${action.toUpperCase()}`);
+        addTerminalLog("TRANSACTION: Broadcasting to Base Sepolia...");
+
+        try {
+            const tx = await contract.requestAction(action, {
+                value: ethers.parseEther(reward)
+            });
+            setMissionProposal(null);
+            addTerminalLog(`TX SENT: ${tx.hash.slice(0, 10)}...`);
+            await tx.wait();
+            addTerminalLog("TX CONFIRMED. Robot node picking up mission...");
+            loadTasks(contract);
+        } catch (error) {
+            addTerminalLog(`TX FAILED: ${error.message.slice(0, 50)}...`);
+        }
     };
 
     const handleCancelTask = async (taskId) => {
@@ -188,6 +213,33 @@ function App() {
                         ))}
                     </div>
                 </section>
+
+                {missionProposal && (
+                    <section className="mission-proposal glass highlight-pulse">
+                        <div className="proposal-header">
+                            <h3>🚀 MISSION PROPOSAL GENERATED</h3>
+                            <button className="close-btn" onClick={() => setMissionProposal(null)}>&times;</button>
+                        </div>
+                        <div className="proposal-content">
+                            <div className="proposal-row">
+                                <span className="label">ACTION:</span>
+                                <span className="value glow-text-small">{missionProposal.action.toUpperCase()}</span>
+                            </div>
+                            <div className="proposal-row">
+                                <span className="label">REASONING:</span>
+                                <span className="value italics">"{missionProposal.reason}"</span>
+                            </div>
+                            <div className="proposal-row">
+                                <span className="label">REWARD:</span>
+                                <span className="value neon-alt">{missionProposal.reward} ETH</span>
+                            </div>
+                        </div>
+                        <div className="proposal-footer">
+                            <button className="connect-btn secondary" onClick={() => setMissionProposal(null)}>ABORT</button>
+                            <button className="connect-btn" onClick={executeMission}>AUTHORIZE MISSION</button>
+                        </div>
+                    </section>
+                )}
 
                 <section className="action-grid">
                     <div className={highlightAction === 'wave' ? 'highlight-pulse' : ''}>
