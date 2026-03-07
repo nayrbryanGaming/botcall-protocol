@@ -75,8 +75,8 @@ function App() {
             console.log("Syncing with contract:", addr);
 
             const latestTasks = await contractInstance.getLatestTasks(10);
-            // Ensure we handle the Result object iterable property
-            const taskArray = Array.from(latestTasks);
+            // Handle Result object safely
+            const taskArray = Array.from(latestTasks).map(t => Array.from(t));
             setTasks(taskArray);
 
             addTerminalLog(`SYNC // Contract ${addr.slice(0, 8)}... synced. ${taskArray.length} missions.`);
@@ -286,12 +286,15 @@ function App() {
                                 <div key={idx} className="task-card glass">
                                     <div className="task-main">
                                         <span className="task-id">#{task[0]?.toString()}</span>
-                                        <span className="task-action">{task[3].toUpperCase()}</span>
+                                        <span className="task-action">{task[3]?.toString().toUpperCase()}</span>
                                     </div>
                                     <div className={`status-badge status-${task[5]?.toString()}`}>
                                         {task[5]?.toString() === '0' ? "Pending" :
                                             task[5]?.toString() === '1' ? "In Progress" :
                                                 task[5]?.toString() === '2' ? "Completed" : "Cancelled"}
+                                    </div>
+                                    <div className="task-reward" style={{ fontSize: '0.7rem', color: 'var(--primary)' }}>
+                                        {ethers.formatEther(task[4] || 0n)} ETH
                                     </div>
                                 </div>
                             ))

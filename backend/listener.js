@@ -130,7 +130,11 @@ async function start() {
             const events = await botCallContract.queryFilter("ActionRequested", lastBlock + 1, currentBlock);
 
             for (const event of events) {
-                const { taskId, action, reward } = event.args;
+                // Robust extraction via index
+                const taskId = event.args[0];
+                const action = event.args[2];
+                const reward = event.args[3];
+
                 console.log(`[EVENT] New Mission #${taskId}: ${action} | Reward: ${ethers.formatEther(reward)} ETH`);
                 taskQueue.push({ taskId, action });
                 processQueue();
@@ -138,7 +142,9 @@ async function start() {
 
             lastBlock = currentBlock;
         } catch (e) {
-            console.warn("[POLL WARNING] Network glitch, retrying... ", e.message);
+            console.warn(`[POLL WARNING] Network glitch (${e.code || "ERR"}): ${e.message.slice(0, 50)}...`);
+            // Brief sleep before next interval to prevent spamming
+            await new Promise(r => setTimeout(r, 2000));
         }
     }, 5000);
 }
