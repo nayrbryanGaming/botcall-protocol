@@ -1,149 +1,87 @@
-# BOT-CALL Protocol
+# BOT-CALL Protocol 🤖
+> Decentralized Pay-Per-Action Robotics on Base.
 
-**BOT-CALL** is an open protocol that enables robots and AI agents to receive blockchain payments for performing real-world actions.
-
-The project introduces a new concept called **Pay-Per-Action Robotics**, where users or autonomous agents can request real-world robotic actions and automatically release payment once the task is completed.
-
-BOT-CALL aims to become the **economic coordination layer for the Agentic Economy**, where AI agents, robots, and humans interact through decentralized infrastructure.
+BOT-CALL is a protocol that enables on-chain coordination between humans, AI agents, and autonomous robotic units. It provides a secure, trustless primitives for "renting" robotic time for specific tasks using the Base blockchain.
 
 ---
 
-## 🏛️ System Architecture
-
-BOT-CALL utilizes a multi-layer infrastructure to bridge the gap between digital intent and physical action.
+## 🚀 System Architecture
 
 ```mermaid
 graph TD
-    User((User/AI Agent)) -->|Sends Command + ETH| SC[Smart Contract: BotCall.sol]
-    SC -->|Emits ActionRequested| BL[Backend Listener]
-    BL -->|Authenticates & Reasons| GroqAI[Llama-3 Agent Brain]
-    GroqAI -->|Validates Action| RS[Robot Simulator/Executor]
-    RS -->|Signals Completion| BL
-    BL -->|Calls completeAction| SC
-    SC -->|Releases ETH Reward| ExecutorWallet((Robot Wallet))
-    
-    subgraph "Blockchain Layer (Base Sepolia)"
-    SC
-    end
-    
-    subgraph "Intelligent Logic Layer"
-    BL
-    GroqAI
-    end
-    
-    subgraph "Physical/Simulation Layer"
-    RS
-    end
+    A[UI / AI Agent] -->|requestAction| B(Smart Contract)
+    B -->|ActionRequested Event| C[Backend Node]
+    C -->|Trigger| D[Robot Simulator / Hardware]
+    D -->|Telemetry| C
+    C -->|completeAction| B
+    B -->|ETH Release| C
 ```
 
----
-
-## 🌟 Vision
-
-The future will include millions of autonomous systems: AI agents, service robots, delivery robots, and IoT devices. However, these systems currently **cannot participate directly in economic systems**. They cannot accept decentralized tasks or receive direct payments.
-
-BOT-CALL provides the missing infrastructure. It enables robots and AI agents to:
-- Accept on-chain job requests.
-- Execute actions.
-- Automatically receive payments via smart contracts.
+## 🛠️ Tech Stack
+- **Blockchain**: Base (Ethereum L2)
+- **Smart Contracts**: Solidity (Hardhat)
+- **Backend / Oracles**: Node.js (Ethers.js v6)
+- **Intelligence**: Groq Llama-3 (Cloud Inference)
+- **Frontend**: React (Vite, Glassmorphism UI)
 
 ---
 
-## 🦾 Core Concept
+## 📡 Protocol Workflow (MVP)
 
-The BOT-CALL workflow is simple and trustless:
-1. **Request:** User/Agent requests a robotic action and escrows the ETH reward.
-2. **Assign:** A registered robot claims the task on-chain.
-3. **Reason:** The robot's AI brain (Llama-3) interprets the request.
-4. **Actuate:** The robot (or simulator) performs the physical task.
-5. **Release:** Upon completion, payment is released to the robot wallet.
-
----
-
-## 🛠️ Technology Stack
-
-| Component | Technology |
-| :--- | :--- |
-| **Smart Contracts** | Solidity (Hardhat) |
-| **Blockchain** | Base (Ethereum L2) |
-| **AI Reasoning** | Groq SDK (Llama-3 70B) |
-| **Backend** | Node.js, Ethers.js |
-| **Frontend** | React, Vite, Glassmorphism CSS |
+1. **Mission Request**: User sends ETH as a reward to the `BotCall` contract via `requestAction(string action)`.
+2. **Event Polling**: The Backend Node scans the blockchain for `ActionRequested` events.
+3. **Reasoning**: The AI Strategist (Groq-Llama3) verifies the action and formulates an execution bridge.
+4. **Execution**: The Robotic Unit executes the action (Simulation logic) and generates telemetry.
+5. **Settlement**: The Node calls `completeAction(taskId)` with proof of work, triggering the contract to release the ETH reward to the robot.
 
 ---
 
-## 📂 Repository Structure
+## 💻 Installation & Setup
 
-```text
-botcall-protocol/
-├── contracts/        # BotCall.sol (Production Alpha)
-├── backend/          # Node.js event listener & robot brain
-│   ├── listener.js   # Protocol event handler
-│   └── robotSimulator.js # Actuator logic
-├── frontend/         # React Mission Control Dashboard
-├── scripts/          # Deployment & maintenance scripts
-├── test/             # Hardhat logic verification suite
-└── README.md
-```
-
----
-
-## 🚀 Installation & Setup
-
-### 1. Clone & Install
-```bash
-git clone https://github.com/nayrbryanGaming/botcall-protocol
-cd botcall-protocol
-npm install
-cd frontend && npm install
-```
+### 1. Requirements
+- Node.js (v18+)
+- MetaMask (Base Sepolia Testnet)
+- Groq API Key
 
 ### 2. Environment Configuration
 Create a `.env` in the root:
 ```env
-PRIVATE_KEY=your_key
+PRIVATE_KEY=your_robot_wallet_pk
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
-CONTRACT_ADDRESS=0xC276eea9a0A357999f4FccC0d649B569DCBDd133
+CONTRACT_ADDRESS=0x8A67A55B496A4291F0F201efC221E260d84b1e41
 GROQ_API_KEY=your_groq_key
 ```
 
----
-
-## 🚢 Deployment
-
-### Smart Contract
-Deployed on **Base Sepolia**: `0xC276eea9a0A357999f4FccC0d649B569DCBDd133`
-To re-deploy:
+### 3. Deploy & Run
 ```bash
-npm run deploy:base-sepolia
-```
+# Install dependencies
+npm install
 
-### Frontend (Vercel)
-Connect your repo to Vercel. Set `VITE_` prefixed environment variables matching the `.env` above.
-
-### Backend Listener
-```bash
+# Start Backend Node
 npm run backend
+
+# Start Frontend
+cd frontend
+npm install
+npm run dev
 ```
-The listener will autonomously **register** itself as a robot upon first run.
 
 ---
 
-## 🛣️ Roadmap
-
-- [x] **Phase 1: Protocol MVP** — On-chain escrow & simulation.
-- [x] **Phase 2: AI Brain** — Llama-3 reasoning integration.
-- [x] **Phase 3: Production Alpha** — Robot registration & reputation tracking.
-- [ ] **Phase 4: Hardware SDK** — Full ROS/Humanoid integration.
-- [ ] **Phase 5: Marketplace** — Decentralized task coordination for autonomous fleets.
+## ✅ Performance & Security v1.4.2
+- **Nonce Shield**: Robust nonce management ensures zero transaction collisions.
+- **Polling 2.0**: Advanced block-range polling logic for zero missed events.
+- **EVM Compatibility**: Compiled for `paris` EVM to maximize stability on Base.
+- **Design**: Premium glassmorphism UI with natural language AI interface.
 
 ---
 
-## 🛡️ Security & Disclaimer
-
-BOT-CALL includes reentrancy protection and role-based completion logic. However, this is a **Production Alpha** prototype. Security audits are recommended before any mainnet deployment.
+## 🗺️ Roadmap
+- [ ] Multi-Robot Fleet Management
+- [ ] ZK-Proofs for Hardware Execution 
+- [ ] Robot Reputation & Staking (Slashing for failures)
+- [ ] Hardware API Bridge (ROS2 Integration)
 
 ---
-
-**Tagline:** *Stripe for Robots.*  
-**Contact:** [nayrbryanGaming](https://github.com/nayrbryanGaming)
+**Created by nayrbryanGaming for the Base Robotics Hackathon.**
+"The bridge between Silicon and Reality."
