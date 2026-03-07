@@ -18,32 +18,34 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 value: ethers.parseEther(rewardEth)
             });
 
-            console.log("Transaction sent:", tx.hash);
             onActionInitiated(tx.hash);
             await tx.wait();
-            console.log("Transaction confirmed");
         } catch (error) {
             console.error("Action request failed:", error);
-            alert("Error: " + error.message);
         } finally {
             setLoading(false);
         }
     };
 
+    const icon = actionName === 'wave' ? '👋' : actionName === 'scan room' ? '📷' : '🤖';
+
     return (
-        <div className="robot-card">
-            <h3>{actionName.charAt(0) + actionName.slice(1).toLowerCase()}</h3>
-            <p style={{ color: '#aaa', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                Remote command for the BOT-CALL robot executor.
+        <div className="robot-card glass">
+            <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>{icon}</div>
+            <h3 style={{ textTransform: 'uppercase', letterSpacing: '0.1em' }}>{actionName}</h3>
+            <p style={{ color: 'var(--text-dim)', fontSize: '0.8rem', margin: '1rem 0' }}>
+                On-chain request for autonomous unit execution.
             </p>
-            <div style={{ marginBottom: '1.5rem', fontSize: '1.2rem', fontWeight: 'bold' }}>
+            <div style={{ marginBottom: '1.5rem', fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)' }}>
                 {rewardEth} ETH
             </div>
             <button
+                className="connect-btn"
+                style={{ width: '100%' }}
                 onClick={handleRequest}
                 disabled={loading || disabled || !CONTRACT_ADDRESS}
             >
-                {loading ? "Confirming..." : `Hire Robot to ${actionName}`}
+                {loading ? "TRANSACTING..." : `EXECUTE ${actionName.toUpperCase()}`}
             </button>
         </div>
     );

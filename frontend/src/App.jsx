@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { CONTRACT_ADDRESS, BOT_CALL_ABI, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
@@ -12,7 +12,22 @@ function App() {
     const [tasks, setTasks] = useState([]);
     const [aiPrompt, setAiPrompt] = useState("");
     const [isAiThinking, setIsAiThinking] = useState(false);
-    const [highlightAction, setHighlightAction] = useState(null);
+
+    const terminalEndRef = useRef(null);
+    const [terminalLogs, setTerminalLogs] = useState([
+        "INIT // BOT-CALL CORE v1.3.0",
+        "NET  // CONNECTING TO BASE SEPOLIA...",
+        "AUTH // NEURAL INTERFACE (GROQ-LLAMA3) READY",
+        "ROBOT// PROD_NODE_01 STANDBY"
+    ]);
+
+    const scrollToBottom = () => {
+        terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [terminalLogs]);
 
     useEffect(() => {
         if (window.ethereum) {
@@ -40,20 +55,16 @@ function App() {
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             setContract(c);
             loadTasks(c);
+            addTerminalLog(`CONNECTED: Wallet ${accounts[0].slice(0, 10)}... synced.`);
         } catch (error) {
             console.error("Connection Error", error);
+            addTerminalLog(`SYNC ERROR: Wallet connection rejected.`);
         }
     };
 
-    const [terminalLogs, setTerminalLogs] = useState([
-        "> Initializing BOT-CALL Protocol v1.2.0...",
-        "> Connection secure: BASE SEPOLIA",
-        "> Robot Node PROD-01 detected: Llama-3 Brain Online",
-        "> System Ready: Waiting for Mission Parameters..."
-    ]);
-
     const addTerminalLog = (msg) => {
-        setTerminalLogs(prev => [...prev.slice(-9), `> ${msg}`]);
+        const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+        setTerminalLogs(prev => [...prev, `[${timestamp}] ${msg}`]);
     };
 
     const loadTasks = async (contractInstance) => {
@@ -61,9 +72,9 @@ function App() {
         try {
             const count = await contractInstance.taskCount();
             const loadedTasks = [];
-            const start = Number(count) > 10 ? Number(count) - 9 : 1;
-            for (let i = start; i <= Number(count); i++) {
-                const task = await contractInstance.tasks(i); // FIXED BUG: was 'c'
+            const startIdx = Number(count) > 8 ? Number(count) - 7 : 1;
+            for (let i = startIdx; i <= Number(count); i++) {
+                const task = await contractInstance.tasks(i);
                 loadedTasks.push(task);
             }
             setTasks(loadedTasks.reverse());
@@ -77,13 +88,13 @@ function App() {
         if (!aiPrompt || !account) return;
 
         setIsAiThinking(true);
-        addTerminalLog(`RECEIVED MISSION COMMAND: "${aiPrompt}"`);
-        addTerminalLog("AI AGENT: Initiating reasoning sequence (Groq Llama-3)...");
+        addTerminalLog(`CMD >> "${aiPrompt}"`);
+        addTerminalLog("AI >> Analyzing request via Groq-Llama3...");
 
         try {
             const result = await interpretAction(aiPrompt);
-            addTerminalLog(`AI BRAIN: Command interpreted as "${result.action.toUpperCase()}"`);
-            addTerminalLog(`AI REASONING: ${result.reason}`);
+            addTerminalLog(`AI >> Reasoning: "${result.reason}"`);
+            addTerminalLog(`AI >> Action determined: ${result.action.toUpperCase()}`);
 
             setMissionProposal({
                 action: result.action,
@@ -91,10 +102,10 @@ function App() {
                 reward: result.action === 'wave' ? '0.0001' : '0.0002'
             });
 
-            addTerminalLog("MISSION PROPOSAL GENERATED. Awaiting user authorization...");
+            addTerminalLog("SYS >> Mission Proposal generated. Waiting for user Auth.");
 
         } catch (error) {
-            addTerminalLog("PROTOCOL ERROR: AI Reasoning failure.");
+            addTerminalLog("ERR >> AI interface failed.");
             console.error(error);
         }
         setIsAiThinking(false);
@@ -105,31 +116,20 @@ function App() {
         if (!missionProposal || !contract) return;
         const { action, reward } = missionProposal;
 
-        addTerminalLog(`USER AUTHORIZED MISSION: ${action.toUpperCase()}`);
-        addTerminalLog("TRANSACTION: Broadcasting to Base Sepolia...");
+        addTerminalLog(`USER >> MISSION AUTHORIZED: ${action.toUpperCase()}`);
+        addTerminalLog("TX >> Broadcasting to Base Sepolia...");
 
         try {
             const tx = await contract.requestAction(action, {
                 value: ethers.parseEther(reward)
             });
             setMissionProposal(null);
-            addTerminalLog(`TX SENT: ${tx.hash.slice(0, 10)}...`);
+            addTerminalLog(`TX >> SENT: ${tx.hash.slice(0, 16)}...`);
             await tx.wait();
-            addTerminalLog("TX CONFIRMED. Robot node picking up mission...");
+            addTerminalLog("TX >> CONFIRMED. Robot Node starting execution.");
             loadTasks(contract);
         } catch (error) {
-            addTerminalLog(`TX FAILED: ${error.message.slice(0, 50)}...`);
-        }
-    };
-
-    const handleCancelTask = async (taskId) => {
-        if (!contract) return;
-        try {
-            const tx = await contract.cancelTask(taskId);
-            await tx.wait();
-            loadTasks(contract);
-        } catch (error) {
-            console.error("Cancel Task Error", error);
+            addTerminalLog(`TX >> FAILED: User rejected or gas error.`);
         }
     };
 
@@ -138,19 +138,15 @@ function App() {
             <div className="protocol-status-bar">
                 <div className="status-item">
                     <span className="status-label">PROTOCOL</span>
-                    <span className="status-value pulse-green">ACTIVE (v1.2.0-alpha)</span>
+                    <span className="status-value pulse-primary">BOT-CALL v1.3.0</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">NETWORK</span>
+                    <span className="status-label">NET</span>
                     <span className="status-value">BASE SEPOLIA</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">NODES</span>
-                    <span className="status-value">1 ACTIVE (PROD-01)</span>
-                </div>
-                <div className="status-item hide-mobile">
-                    <span className="status-label">UPTIME</span>
-                    <span className="status-value">99.9%</span>
+                    <span className="status-label">STATUS</span>
+                    <span className="status-value">NOMINAL</span>
                 </div>
             </div>
 
@@ -165,11 +161,11 @@ function App() {
 
                 {!account ? (
                     <button className="connect-btn" onClick={connectWallet}>
-                        Connect Wallet
+                        Initialize Terminal
                     </button>
                 ) : (
                     <div className="account-info">
-                        <span className="dot active"></span>
+                        <span className="dot"></span>
                         {account.slice(0, 6)}...{account.slice(-4)}
                     </div>
                 )}
@@ -177,123 +173,108 @@ function App() {
 
             <main>
                 <section className="hero">
-                    <h2>Hire a Robot <br /> via Blockchain</h2>
-                    <p>On-chain payment. Real-world execution.</p>
+                    <h2>Own a Robot <br /> for a Minute</h2>
+                    <p>On-chain coordination for real-world robotic actions.</p>
                 </section>
 
-                <section className="ai-agent-card glass">
-                    <div className={`ai-header ${isAiThinking ? 'thinking-glow' : ''}`}>
-                        <h3>🧠 {isAiThinking ? 'AI IS THINKING...' : 'AI BRAIN INTERFACE'}</h3>
-                        <span className="badge">{isAiThinking ? 'PROCESSING' : 'LLAMA-3 AGENT'}</span>
-                    </div>
-                    <form className="ai-form" onSubmit={handleAiCommand}>
-                        <input
-                            type="text"
-                            placeholder="Type a command (e.g., 'Say hello to the world')..."
-                            value={aiPrompt}
-                            onChange={(e) => setAiPrompt(e.target.value)}
-                            disabled={isAiThinking}
-                        />
-                        <button className="connect-btn" type="submit" disabled={isAiThinking || !account}>
-                            {isAiThinking ? "PROCESSING..." : "PROCESS"}
-                        </button>
-                    </form>
-                </section>
+                <div className="dashboard-grid">
+                    <section className="left-panel">
+                        <section className="ai-agent-card glass">
+                            <div className="ai-header">
+                                <h3>🧠 AI BRAIN INTERFACE</h3>
+                                <span className={`badge ${isAiThinking ? 'pulse-primary' : ''}`}>
+                                    {isAiThinking ? 'Thinking' : 'Ready'}
+                                </span>
+                            </div>
+                            <form className="ai-form" onSubmit={handleAiCommand}>
+                                <input
+                                    type="text"
+                                    placeholder="e.g., 'Say hello' or 'Scan the area'..."
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    disabled={isAiThinking}
+                                />
+                                <button className="connect-btn" type="submit" disabled={isAiThinking || !account}>
+                                    {isAiThinking ? "..." : "PROCESS"}
+                                </button>
+                            </form>
+                        </section>
 
-                <section className="robot-terminal glass">
-                    <div className="terminal-header">
-                        <span className="terminal-dot red"></span>
-                        <span className="terminal-dot orange"></span>
-                        <span className="terminal-dot green"></span>
-                        <span className="terminal-title">ROBOT_NODE_PROD_01 &gt; INTERNAL_FEED</span>
-                    </div>
-                    <div className="terminal-body">
-                        {terminalLogs.map((log, i) => (
-                            <div key={i} className="terminal-line">{log}</div>
-                        ))}
-                    </div>
-                </section>
-
-                {missionProposal && (
-                    <section className="mission-proposal glass highlight-pulse">
-                        <div className="proposal-header">
-                            <h3>🚀 MISSION PROPOSAL GENERATED</h3>
-                            <button className="close-btn" onClick={() => setMissionProposal(null)}>&times;</button>
-                        </div>
-                        <div className="proposal-content">
-                            <div className="proposal-row">
-                                <span className="label">ACTION:</span>
-                                <span className="value glow-text-small">{missionProposal.action.toUpperCase()}</span>
+                        <section className="robot-terminal glass">
+                            <div className="terminal-header">
+                                <span className="terminal-dot red"></span>
+                                <span className="terminal-dot orange"></span>
+                                <span className="terminal-dot green"></span>
+                                <span className="terminal-title">TERMINAL_OUTPUT // NODE_PROD_1</span>
                             </div>
-                            <div className="proposal-row">
-                                <span className="label">REASONING:</span>
-                                <span className="value italics">"{missionProposal.reason}"</span>
+                            <div className="terminal-body">
+                                {terminalLogs.map((log, i) => (
+                                    <div key={i} className="terminal-line">{log}</div>
+                                ))}
+                                <div ref={terminalEndRef} />
                             </div>
-                            <div className="proposal-row">
-                                <span className="label">REWARD:</span>
-                                <span className="value neon-alt">{missionProposal.reward} ETH</span>
-                            </div>
-                        </div>
-                        <div className="proposal-footer">
-                            <button className="connect-btn secondary" onClick={() => setMissionProposal(null)}>ABORT</button>
-                            <button className="connect-btn" onClick={executeMission}>AUTHORIZE MISSION</button>
-                        </div>
+                        </section>
                     </section>
-                )}
+
+                    {missionProposal && (
+                        <section className="mission-proposal glass">
+                            <div className="ai-header">
+                                <h3>🚀 MISSION PROPOSAL</h3>
+                                <button className="close-btn" style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer' }} onClick={() => setMissionProposal(null)}>&times;</button>
+                            </div>
+                            <div className="proposal-content">
+                                <div className="proposal-row">
+                                    <span className="label">ACTION:</span>
+                                    <span className="value glow-text">{missionProposal.action.toUpperCase()}</span>
+                                </div>
+                                <div className="proposal-row">
+                                    <span className="label">REASON:</span>
+                                    <span className="value">"{missionProposal.reason}"</span>
+                                </div>
+                                <div className="proposal-row">
+                                    <span className="label">REWARD:</span>
+                                    <span className="value neon-green">{missionProposal.reward} ETH</span>
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+                                <button className="connect-btn" style={{ background: 'rgba(255,255,255,0.05)', color: '#fff' }} onClick={() => setMissionProposal(null)}>ABORT</button>
+                                <button className="connect-btn" onClick={executeMission}>AUTHORIZE MISSION</button>
+                            </div>
+                        </section>
+                    )}
+                </div>
 
                 <section className="action-grid">
-                    <div className={highlightAction === 'wave' ? 'highlight-pulse' : ''}>
-                        <RobotActionButton
-                            actionName="wave"
-                            rewardEth="0.0001"
-                            disabled={!contract}
-                            onActionInitiated={() => loadTasks(contract)}
-                        />
-                    </div>
-                    <div className={highlightAction === 'scan room' ? 'highlight-pulse' : ''}>
-                        <RobotActionButton
-                            actionName="scan room"
-                            rewardEth="0.0002"
-                            disabled={!contract}
-                            onActionInitiated={() => loadTasks(contract)}
-                        />
-                    </div>
+                    <RobotActionButton
+                        actionName="wave"
+                        rewardEth="0.0001"
+                        disabled={!contract}
+                        onActionInitiated={() => loadTasks(contract)}
+                    />
+                    <RobotActionButton
+                        actionName="scan room"
+                        rewardEth="0.0002"
+                        disabled={!contract}
+                        onActionInitiated={() => loadTasks(contract)}
+                    />
                 </section>
 
                 <section className="task-history">
                     <h3>LIVE ROBOTIC FEED</h3>
                     <div className="task-list">
                         {tasks.length === 0 ? (
-                            <p className="empty">Initializing feed...</p>
+                            <p style={{ color: 'var(--text-dim)', textAlign: 'center' }}>Waiting for robotic synchronization...</p>
                         ) : (
                             tasks.map((task, idx) => (
                                 <div key={idx} className="task-card glass">
-                                    <div className="task-info">
-                                        <div className="task-main">
-                                            <span className="task-id">TASK #{task[0]?.toString()}</span>
-                                            <span className="task-action">{task[3].toUpperCase()}</span>
-                                        </div>
-                                        <div className="task-meta">
-                                            {task[2] !== '0x0000000000000000000000000000000000000000' && (
-                                                <span className="executor-pill">🤖 {task[2].slice(0, 6)}...</span>
-                                            )}
-                                            <span className="time-pill">⏰ {new Date(Number(task[6]) * 1000).toLocaleTimeString()}</span>
-                                        </div>
+                                    <div className="task-main">
+                                        <span className="task-id">#{task[0]?.toString()}</span>
+                                        <span className="task-action">{task[3].toUpperCase()}</span>
                                     </div>
-                                    <div className="task-controls">
-                                        <div className={`status-badge status-${task[5]?.toString()}`}>
-                                            {task[5]?.toString() === '0' ? "Pending" :
-                                                task[5]?.toString() === '1' ? "Executing" :
-                                                    task[5]?.toString() === '2' ? "Completed" : "Cancelled"}
-                                        </div>
-                                        {task[5]?.toString() === '0' && task[1].toLowerCase() === account?.toLowerCase() && (
-                                            <button
-                                                className="cancel-btn"
-                                                onClick={() => handleCancelTask(task[0])}
-                                            >
-                                                Cancel
-                                            </button>
-                                        )}
+                                    <div className={`status-badge status-${task[5]?.toString()}`}>
+                                        {task[5]?.toString() === '0' ? "Pending" :
+                                            task[5]?.toString() === '1' ? "In Progress" :
+                                                task[5]?.toString() === '2' ? "Completed" : "Cancelled"}
                                     </div>
                                 </div>
                             ))
@@ -302,8 +283,8 @@ function App() {
                 </section>
             </main>
 
-            <footer>
-                <p>&copy; 2026 BOT-CALL PROTOCOL &bull; SECURED BY BASE</p>
+            <footer style={{ marginTop: '5rem', padding: '3rem', borderTop: '1px solid var(--card-border)', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.75rem' }}>
+                <p>&copy; 2026 BOT-CALL PROTOCOL &bull; AUTONOMOUS ROBOTICS ECONOMY</p>
             </footer>
         </div>
     );

@@ -1,8 +1,13 @@
 {
+    "version": 2,
+    "framework": "vite",
+    "public": true,
     "rewrites": [
         {
             "source": "/(.*)",
-            "destination": "/index.html"
+            "destination": "/"
         }
-    ]
+    ],
+    "installCommand": "npm install",
+    "buildCommand": "npm run build"
 }
