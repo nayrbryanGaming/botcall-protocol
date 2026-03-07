@@ -39,26 +39,41 @@ function App() {
     const [missionProposal, setMissionProposal] = useState(null);
 
     const connectWallet = async () => {
+        if (!window.ethereum) return addTerminalLog("ERR // No Web3 provider detected.");
         try {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             setAccount(accounts[0]);
 
-            const network = await provider.getNetwork();
+            // Ensure provider is initialized
+            const p = provider || new ethers.BrowserProvider(window.ethereum);
+            if (!provider) setProvider(p);
+
+            const network = await p.getNetwork();
             if (network.chainId !== BigInt(BASE_SEPOLIA_CHAIN_ID)) {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
-                });
+                addTerminalLog("NET // Switching to Base Sepolia...");
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+                    });
+                } catch (switchError) {
+                    addTerminalLog("ERR // Failed to switch network.");
+                    return;
+                }
             }
 
-            const signer = await provider.getSigner();
+            const signer = await p.getSigner();
+            if (!CONTRACT_ADDRESS) {
+                addTerminalLog("ERR // VITE_CONTRACT_ADDRESS is missing in env!");
+                return;
+            }
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             setContract(c);
             loadTasks(c);
-            addTerminalLog(`CONNECTED: Wallet ${accounts[0].slice(0, 10)}... synced.`);
+            addTerminalLog(`CONNECTED // Wallet ${accounts[0].slice(0, 8)}... online.`);
         } catch (error) {
             console.error("Connection Error", error);
-            addTerminalLog(`SYNC ERROR: Wallet connection rejected.`);
+            addTerminalLog(`ERR // Wallet sync rejected.`);
         }
     };
 

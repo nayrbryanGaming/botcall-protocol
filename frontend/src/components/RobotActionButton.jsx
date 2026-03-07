@@ -18,10 +18,12 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 value: ethers.parseEther(rewardEth)
             });
 
-            onActionInitiated(tx.hash);
+            console.log("Transaction sent:", tx.hash);
             await tx.wait();
+            if (onActionInitiated) onActionInitiated(tx.hash);
         } catch (error) {
             console.error("Action request failed:", error);
+            alert(`Interaction error: ${error.reason || error.message}`);
         } finally {
             setLoading(false);
         }

@@ -29,9 +29,27 @@ const BOT_CALL_ABI = [
 const botCallContract = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, wallet);
 
 // --- Task Queue System ---
-// Prevents nonce collisions by processing one robotic mission at a time.
 let isProcessing = false;
 const taskQueue = [];
+
+async function sendTxWithRetry(contractFunc, args, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            // Force fetch latest nonce to avoid provider-side staleness
+            const nonce = await provider.getTransactionCount(wallet.address, "latest");
+            const tx = await contractFunc(...args, { nonce });
+            return await tx.wait();
+        } catch (error) {
+            const isNonceErr = error.message.includes("nonce") || error.message.includes("already be used");
+            if (isNonceErr && i < retries - 1) {
+                console.warn(`[RETRY] Nonce sync issue. Waiting 2s... (Attempt ${i + 1}/${retries})`);
+                await new Promise(r => setTimeout(r, 2000));
+                continue;
+            }
+            throw error;
+        }
+    }
+}
 
 async function processQueue() {
     if (isProcessing || taskQueue.length === 0) return;
@@ -41,14 +59,13 @@ async function processQueue() {
     console.log(`\n[QUEUE] STARTING MISSION #${task.taskId} | ACTION: ${task.action.toUpperCase()}`);
 
     try {
-        // 1. Claim Task on-chain
+        // 1. Claim Task
         process.stdout.write("[PROTOCOL] Claiming mission... ");
-        const txStart = await botCallContract.startExecuting(task.taskId);
-        await txStart.wait();
+        await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
         console.log("SUCCESS");
 
-        // 2. AI Reason
-        console.log("[BRAIN] Synchronizing neural pathways...");
+        // 2. AI Brain
+        console.log("[BRAIN] Neural pathway sync in progress...");
         let thought = "Actuating robotic subsystems for optimal execution.";
         try {
             const chat = await groq.chat.completions.create({
@@ -60,31 +77,29 @@ async function processQueue() {
             });
             thought = chat.choices[0]?.message?.content || thought;
         } catch (e) {
-            console.warn("[BRAIN ERROR] Falling back to default heuristics.");
+            console.warn("[BRAIN ERROR] Heuristics fallback.");
         }
         console.log(`[BRAIN] Thought: "${thought}"`);
 
         // 3. Physical Simulation
-        console.log("[SIM] Triggering hardware actuators...");
+        console.log("[SIM] Engaging actuators...");
         const res = await executeAction(task.action);
         console.log(`[SIM] LOG >> ${res.log}`);
         console.log(`[SIM] STATUS >> Bat:${res.battery}% | Sensor:${res.sensors}`);
 
-        // 4. Finalize on-chain
-        process.stdout.write("[PROTOCOL] Mission complete. Sending proof... ");
-        const txEnd = await botCallContract.completeAction(task.taskId);
-        await txEnd.wait();
-        console.log("PAID");
-        console.log(`[PROTOCOL] TX_HASH: ${txEnd.hash.slice(0, 16)}...`);
+        // 4. Finalize
+        process.stdout.write("[PROTOCOL] Finalizing & Sending Proof... ");
+        const receipt = await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
+        console.log(`SUCCESS | PAID | TX: ${receipt.hash.slice(0, 10)}...`);
 
     } catch (error) {
-        console.log("CRITICAL FAILURE");
-        console.error(`[ERROR] Task #${task.taskId} error:`, error.reason || error.message);
+        console.log("CRITICAL ERROR");
+        console.error(`[ERROR] Task #${task.taskId}:`, error.reason || error.message);
     }
 
     console.log("-----------------------------------------");
     isProcessing = false;
-    processQueue(); // Check for next mission
+    setTimeout(processQueue, 500); // Check for next mission with slight breathing room
 }
 
 async function checkAndRegister() {
@@ -108,7 +123,7 @@ async function checkAndRegister() {
 
 async function start() {
     console.log("\n=========================================");
-    console.log("🤖 BOT-CALL PROTOCOL | BACKEND v1.4.1");
+    console.log("🤖 BOT-CALL PROTOCOL | BACKEND v1.4.2");
     console.log("=========================================");
     console.log(`NET: BASE SEPOLIA`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);
@@ -117,16 +132,21 @@ async function start() {
 
     await checkAndRegister();
 
-    console.log("[LISTEN] Scanning for missions (Polling Mode: 5s)...");
+    console.log("[LISTEN] Polling for missions (5s interval)...");
 
     let lastBlock = await provider.getBlockNumber();
 
-    // Polling Loop for Robustness
+    // Heartbeat for visibility
+    setInterval(() => {
+        if (!isProcessing) console.log(`[HEARTBEAT] Node online. Queue: ${taskQueue.length} | Block: ${lastBlock}`);
+    }, 30000);
+
     setInterval(async () => {
         try {
             const currentBlock = await provider.getBlockNumber();
             if (currentBlock <= lastBlock) return;
 
+            // console.log(`[POLL] Checking blocks ${lastBlock + 1} to ${currentBlock}...`); // Removed for cleaner logs
             const events = await botCallContract.queryFilter("ActionRequested", lastBlock + 1, currentBlock);
 
             for (const event of events) {
@@ -134,15 +154,14 @@ async function start() {
                 const taskId = event.args[0];
                 const action = event.args[2];
                 const reward = event.args[3];
-
-                console.log(`[EVENT] New Mission #${taskId}: ${action} | Reward: ${ethers.formatEther(reward)} ETH`);
+                console.log(`[EVENT] Mission #${taskId} spotted: ${action}`);
                 taskQueue.push({ taskId, action });
                 processQueue();
             }
 
             lastBlock = currentBlock;
         } catch (e) {
-            console.warn(`[POLL WARNING] Network glitch (${e.code || "ERR"}): ${e.message.slice(0, 50)}...`);
+            console.warn("[POLL WARNING]", e.message.slice(0, 50));
             // Brief sleep before next interval to prevent spamming
             await new Promise(r => setTimeout(r, 2000));
         }
