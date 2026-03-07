@@ -70,16 +70,25 @@ function App() {
     const loadTasks = async (contractInstance) => {
         if (!contractInstance) return;
         try {
-            const count = await contractInstance.taskCount();
-            const loadedTasks = [];
-            const startIdx = Number(count) > 8 ? Number(count) - 7 : 1;
-            for (let i = startIdx; i <= Number(count); i++) {
-                const task = await contractInstance.tasks(i);
-                loadedTasks.push(task);
-            }
-            setTasks(loadedTasks.reverse());
+            // Use the new optimized batch retrieval
+            const latestTasks = await contractInstance.getLatestTasks(10);
+            setTasks([...latestTasks]); // Convert proxy to array
+            addTerminalLog(`SYNC // Metadata synced. ${latestTasks.length} missions loaded.`);
         } catch (error) {
             console.error("Load Tasks Error", error);
+            // Fallback for older contract version
+            try {
+                const count = await contractInstance.taskCount();
+                const loadedTasks = [];
+                const startIdx = Number(count) > 8 ? Number(count) - 7 : 1;
+                for (let i = startIdx; i <= Number(count); i++) {
+                    const t = await contractInstance.tasks(i);
+                    loadedTasks.push(t);
+                }
+                setTasks(loadedTasks.reverse());
+            } catch (e) {
+                console.error("Fallback Failed", e);
+            }
         }
     };
 

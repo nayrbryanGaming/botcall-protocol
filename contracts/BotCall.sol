@@ -116,5 +116,18 @@ contract BotCall is Ownable, ReentrancyGuard {
         emit ActionCancelled(_taskId);
     }
 
+    /**
+     * @dev Get latest tasks for frontend optimization.
+     */
+    function getLatestTasks(uint256 _count) external view returns (Task[] memory) {
+        uint256 resultCount = _count > taskCount ? taskCount : _count;
+        Task[] memory latestTasks = new Task[](resultCount);
+        
+        for (uint256 i = 0; i < resultCount; i++) {
+            latestTasks[i] = tasks[taskCount - i];
+        }
+        return latestTasks;
+    }
+
     receive() external payable {}
 }
