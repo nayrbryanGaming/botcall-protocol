@@ -17,7 +17,7 @@ function App() {
     const terminalEndRef = useRef(null);
     const [terminal, setTerminal] = useState([
         "SYSTEM // BOT-CALL OS READY",
-        "PROTOCOL // v2.2.0 PLATINUM READY",
+        "PROTOCOL // v2.3.0 TITAN FINALE",
         "CORE // Neural Bridge Standardized",
         "DATA // BASE SEPOLIA CHANNEL ACTIVE",
         "AUTH // NODE 0x5415... AUTHORIZED"
@@ -222,7 +222,7 @@ function App() {
             <div className="protocol-status-bar">
                 <div className="status-item">
                     <span className="status-label">PROTOCOL</span>
-                    <span className="status-value pulse-primary">BOT-CALL v2.2.0</span>
+                    <span className="status-value pulse-primary">BOT-CALL v2.3.0</span>
                 </div>
                 <div className="status-item">
                     <span className="status-label">NET</span>

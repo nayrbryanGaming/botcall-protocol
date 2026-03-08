@@ -160,7 +160,7 @@ async function checkAndRegister() {
 }
 
 async function start() {
-    console.log("\n🤖 BOT-CALL BACKEND // v2.2.0 PLATINUM READY");
+    console.log("\n🤖 BOT-CALL BACKEND // v2.3.0 TITAN FINALE");
     console.log("=========================================");
     console.log(`RPC: ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);
@@ -232,7 +232,7 @@ async function start() {
     // Heartbeat
     setInterval(() => {
         const status = isProcessing ? "EXECUTING" : "IDLE";
-        console.log(`[HB] v2.2.0 | Node: ONLINE | Status: ${status} | Queue: ${taskQueue.length} | Block: ${lastBlock}`);
+        console.log(`[HB] v2.3.0 | Node: ONLINE | Status: ${status} | Queue: ${taskQueue.length} | Block: ${lastBlock}`);
     }, 15000);
 }
 
