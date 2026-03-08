@@ -1,21 +1,32 @@
-name: test
+name: BOT-CALL Protocol Testbed
 
-on: [push]
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
 
 jobs:
-  test:
+  test-contract:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
-      
-      - name: Setup Node.js
+      - name: Use Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: 18
-          
-      - name: Install Dependencies
-        run: npm install
-        
-      - name: Run Hardhat Tests
-        run: npx hardhat test
+          node-version: '18.x'
+          cache: 'npm'
+      - run: npm install
+      - run: npx hardhat test
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18.x'
+          cache: 'npm'
+      - run: npm install
+      - run: npm run build --workspace=frontend

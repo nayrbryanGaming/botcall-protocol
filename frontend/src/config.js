@@ -1,9 +1,10 @@
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0x2A62eeC69cB289cFAfFc6a37503Fd66fa5f751cF";
 
 export const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532
 
 export const BOT_CALL_ABI = [
     "function requestAction(string action) external payable",
+    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward)",
     "event ActionExecuting(uint256 indexed taskId, address indexed executor)",
     "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward)",
     "event ActionCancelled(uint256 indexed taskId)",
@@ -14,5 +15,6 @@ export const BOT_CALL_ABI = [
     "function getLatestTasks(uint256 count) view returns (tuple(uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)[])",
     "function registerRobot(string _metadata) external",
     "function startExecuting(uint256 _taskId) external",
+    "function completeAction(uint256 _taskId) external",
     "function cancelTask(uint256 _taskId) external"
 ];

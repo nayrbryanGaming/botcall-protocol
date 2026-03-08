@@ -3,10 +3,14 @@
   "version": "1.0.0",
   "description": "A protocol for pay-per-action robotics on Base.",
   "main": "index.js",
+  "workspaces": [
+    "frontend"
+  ],
   "scripts": {
     "test": "hardhat test",
     "deploy:base-sepolia": "hardhat run scripts/deploy.js --network base-sepolia",
-    "backend": "node backend/listener.js"
+    "backend": "node backend/listener.js",
+    "build": "npm run build --workspace=frontend"
   },
   "dependencies": {
     "@openzeppelin/contracts": "^5.0.0",

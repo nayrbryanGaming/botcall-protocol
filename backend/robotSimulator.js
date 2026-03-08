@@ -6,23 +6,40 @@ async function executeAction(action) {
     console.log(`[ROBOT] Sensors: [LIDAR: OK] [IMU: OK] [ENCODERS: OK]`);
 
     switch (action.toLowerCase()) {
-        case "wave":
-            console.log("[ROBOT] Calibrating 7-DOF arm actuators...");
+        case "scan":
+            console.log("[ROBOT] Calibrating 3D depth sensors...");
             await sleep(1500);
-            console.log("[ROBOT] ACTION: Executing friendly wave gesture 👋");
+            console.log("[ROBOT] ACTION: Scanning environment for obstacles 🔍");
             await sleep(2500);
-            console.log("[ROBOT] TELEMETRY: Torque peaked at 1.2Nm | Velocity: 0.5rad/s");
-            const bat1 = Math.floor(Math.random() * 20) + 80;
-            return { battery: bat1, sensors: "OK", log: "Gesture completed successfully." };
+            return { battery: Math.floor(Math.random() * 20) + 70, sensors: "OK", log: "Obstacle map generated." };
 
-        case "scan room":
-            console.log("[ROBOT] Deploying high-resolution LIDAR array...");
+        case "move":
+            console.log("[ROBOT] Engaging drivetrain motors...");
+            await sleep(1000);
+            console.log("[ROBOT] ACTION: Moving to target coordinates [X:12, Y:45] 🏎️");
+            await sleep(3000);
+            return { battery: Math.floor(Math.random() * 20) + 60, sensors: "OK", log: "Navigation successful." };
+
+        case "pick object":
+            console.log("[ROBOT] Initializing end-effector torque sensors...");
             await sleep(2000);
-            console.log("[ROBOT] ACTION: 360-degree environmental mapping in progress 📷");
+            console.log("[ROBOT] ACTION: Gripping target object with precision 🦾");
+            await sleep(3000);
+            return { battery: Math.floor(Math.random() * 20) + 50, sensors: "OK", log: "Object secured in manipulator." };
+
+        case "recharge":
+            console.log("[ROBOT] Locating induction charging station...");
+            await sleep(1500);
+            console.log("[ROBOT] ACTION: Aligning with charging pad ⚡");
             await sleep(4000);
-            console.log("[ROBOT] TELEMETRY: 4.2M points collected | Precision: 0.2mm");
-            const bat2 = Math.floor(Math.random() * 20) + 80;
-            return { battery: bat2, sensors: "OK", log: "Point cloud data stored to local buffer." };
+            return { battery: 100, sensors: "OK", log: "Battery capacity restored to 100%." };
+
+        case "patrol":
+            console.log("[ROBOT] Initializing autonomous loop...");
+            await sleep(1000);
+            console.log("[ROBOT] ACTION: Executing security sweep of perimeter 🚓");
+            await sleep(5000);
+            return { battery: Math.floor(Math.random() * 20) + 40, sensors: "OK", log: "Area clear. No anomalies detected." };
 
         default:
             console.log(`[ROBOT] WARNING: Command "${action}" not in standard library.`);

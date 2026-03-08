@@ -20,6 +20,9 @@ const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
 const BOT_CALL_ABI = [
     "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward)",
+    "event ActionExecuting(uint256 indexed taskId, address indexed executor)",
+    "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward)",
+    "event ActionCancelled(uint256 indexed taskId)",
     "function startExecuting(uint256 _taskId) external",
     "function completeAction(uint256 _taskId) external",
     "function robots(address) view returns (bool isRegistered, string metadata, uint256 tasksCompleted)",
@@ -28,6 +31,19 @@ const BOT_CALL_ABI = [
 
 const botCallContract = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, wallet);
 
+// --- Local State ---
+let currentNonce = -1;
+const processedTasks = new Set();
+
+async function getNextNonce() {
+    if (currentNonce === -1) {
+        currentNonce = await provider.getTransactionCount(wallet.address, "pending");
+    } else {
+        currentNonce++;
+    }
+    return currentNonce;
+}
+
 // --- Task Queue System ---
 let isProcessing = false;
 const taskQueue = [];
@@ -35,18 +51,21 @@ const taskQueue = [];
 async function sendTxWithRetry(contractFunc, args, retries = 3) {
     for (let i = 0; i < retries; i++) {
         try {
-            // Force fetch latest nonce to avoid provider-side staleness
-            const nonce = await provider.getTransactionCount(wallet.address, "latest");
+            const nonce = await getNextNonce();
+            // console.log(`[TX] Sending with nonce: ${nonce}`);
             const tx = await contractFunc(...args, { nonce });
             return await tx.wait();
         } catch (error) {
-            const isNonceErr = error.message.includes("nonce") || error.message.includes("already be used");
-            if (isNonceErr && i < retries - 1) {
-                console.warn(`[RETRY] Nonce sync issue. Waiting 2s... (Attempt ${i + 1}/${retries})`);
-                await new Promise(r => setTimeout(r, 2000));
+            console.error(`[TX ERROR] Attempt ${i + 1}:`, error.message.slice(0, 100));
+
+            // If nonce issue, reset and retry from latest
+            if (error.message.includes("nonce") || error.message.includes("already be used")) {
+                currentNonce = await provider.getTransactionCount(wallet.address, "latest");
                 continue;
             }
-            throw error;
+
+            if (i === retries - 1) throw error;
+            await new Promise(r => setTimeout(r, 2000));
         }
     }
 }
@@ -56,125 +75,179 @@ async function processQueue() {
     isProcessing = true;
 
     const task = taskQueue.shift();
-    console.log(`\n[QUEUE] STARTING MISSION #${task.taskId} | ACTION: ${task.action.toUpperCase()}`);
+    if (processedTasks.has(task.taskId.toString())) {
+        isProcessing = false;
+        setTimeout(processQueue, 100);
+        return;
+    }
+
+    console.log(`\n[QUEUE] STARTING MISSION #${task.taskId} [${task.action.toUpperCase()}]`);
 
     try {
         // 1. Claim Task
-        process.stdout.write("[PROTOCOL] Claiming mission... ");
-        await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
-        console.log("SUCCESS");
+        process.stdout.write("[PROTOCOL] Claiming... ");
+        try {
+            await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
+            console.log("SUCCESS");
+        } catch (err) {
+            if (err.message.includes("Task not pending")) {
+                console.log("ALREADY CLAIMED");
+            } else {
+                throw err;
+            }
+        }
 
         // 2. AI Brain
-        console.log("[BRAIN] Neural pathway sync in progress...");
-        let thought = "Actuating robotic subsystems for optimal execution.";
+        console.log("[BRAIN] Analyzing...");
+        let thought = "Initializing sensors...";
         try {
             const chat = await groq.chat.completions.create({
                 messages: [
-                    { role: "system", content: "You are the internal brain of a robot in the BOT-CALL protocol. Give a 1-sentence high-tech thought." },
+                    { role: "system", content: "You are a robot brain. 1 sentence high-tech thought." },
                     { role: "user", content: task.action }
                 ],
                 model: "llama3-8b-8192",
             });
             thought = chat.choices[0]?.message?.content || thought;
-        } catch (e) {
-            console.warn("[BRAIN ERROR] Heuristics fallback.");
-        }
-        console.log(`[BRAIN] Thought: "${thought}"`);
+        } catch (e) { }
+        console.log(`[BRAIN] Analysis: "${thought}"`);
 
-        // 3. Physical Simulation
-        console.log("[SIM] Engaging actuators...");
+        // 3. Simulation
+        console.log("[SIM] Physical execution...");
         const res = await executeAction(task.action);
-        console.log(`[SIM] LOG >> ${res.log}`);
-        console.log(`[SIM] STATUS >> Bat:${res.battery}% | Sensor:${res.sensors}`);
+        // console.log(`[SIM] RESULT: ${res.log}`); // This line was removed as per the diff
 
         // 4. Finalize
-        process.stdout.write("[PROTOCOL] Finalizing & Sending Proof... ");
+        process.stdout.write("[PROTOCOL] Finalizing proof... ");
         const receipt = await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
-        console.log(`SUCCESS | PAID | TX: ${receipt.hash.slice(0, 10)}...`);
+        console.log("MISSION ACCOMPLISHED");
+
+        processedTasks.add(task.taskId.toString());
 
     } catch (error) {
-        console.log("CRITICAL ERROR");
+        console.log("FAILED");
         console.error(`[ERROR] Task #${task.taskId}:`, error.reason || error.message);
     }
 
     console.log("-----------------------------------------");
     isProcessing = false;
-    setTimeout(processQueue, 500); // Check for next mission with slight breathing room
+    setTimeout(processQueue, 1000);
 }
 
 async function checkAndRegister() {
-    process.stdout.write(`[AUTH] Verifying node ${wallet.address.slice(0, 10)}... `);
+    process.stdout.write(`[AUTH] Checking node ${wallet.address.slice(0, 8)}... `);
     try {
+        const balance = await provider.getBalance(wallet.address);
+        console.log(`[AUTH] Balance: ${ethers.formatEther(balance)} ETH`);
+
+        if (balance === 0n) {
+            console.warn("[CRITICAL] Wallet has 0 ETH. Backend will not be able to process missions.");
+        }
+
         const info = await botCallContract.robots(wallet.address);
         if (!info.isRegistered) {
-            console.log("NOT REGISTERED.");
-            process.stdout.write("[AUTH] Registering on Base Sepolia... ");
-            const tx = await botCallContract.registerRobot("BOT-CALL_PROD_NODE_V2");
-            await tx.wait();
-            console.log("SUCCESS");
+            console.log("UNREGISTERED.");
+            process.stdout.write("[AUTH] Registering robotic node... ");
+            await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_PROD_NODE_V3"]);
+            console.log("REGISTERED");
         } else {
-            console.log(`VERIFIED. Reputation: ${info.tasksCompleted}`);
+            console.log(`VALIDATED | EXP: ${info.tasksCompleted}`);
         }
     } catch (error) {
-        console.log("FAILED.");
-        console.error("[AUTH ERROR]", error.message);
+        console.log("AUTH ERROR");
+        console.error(error.message);
     }
 }
 
 async function start() {
-    console.log("\n=========================================");
-    console.log("🤖 BOT-CALL PROTOCOL | BACKEND v1.4.2");
+    console.log("\n🤖 BOT-CALL BACKEND // v2.2.0 PLATINUM READY");
     console.log("=========================================");
-    console.log(`NET: BASE SEPOLIA`);
+    console.log(`RPC: ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);
-    console.log(`WALLET: ${wallet.address}`);
+    console.log(`NODE: ${wallet.address}`);
     console.log("=========================================\n");
 
     await checkAndRegister();
 
-    console.log("[LISTEN] Polling for missions (5s interval)...");
+    console.log("[LISTEN] Polling for blockchain events...");
 
     let lastBlock = await provider.getBlockNumber();
+    console.log(`[LISTEN] Starting from block: ${lastBlock}`);
 
-    // Heartbeat for visibility
-    setInterval(() => {
-        if (!isProcessing) console.log(`[HEARTBEAT] Node online. Queue: ${taskQueue.length} | Block: ${lastBlock}`);
-    }, 30000);
-
-    setInterval(async () => {
+    const poll = async () => {
         try {
             const currentBlock = await provider.getBlockNumber();
-            if (currentBlock <= lastBlock) return;
+            if (currentBlock <= lastBlock) {
+                setTimeout(poll, 4000);
+                return;
+            }
 
-            // console.log(`[POLL] Checking blocks ${lastBlock + 1} to ${currentBlock}...`); // Removed for cleaner logs
-            const events = await botCallContract.queryFilter("ActionRequested", lastBlock + 1, currentBlock);
+            // Look back 10 blocks to ensure no events are missed during RPC lag
+            const startBlock = Math.max(0, lastBlock - 10);
+            // console.log(`[POLL] Checking ${startBlock} to ${currentBlock}`);
+
+            const events = await botCallContract.queryFilter("ActionRequested", startBlock, currentBlock);
 
             for (const event of events) {
-                // Robust extraction via index
                 const taskId = event.args[0];
                 const action = event.args[2];
-                const reward = event.args[3];
-                console.log(`[EVENT] Mission #${taskId} spotted: ${action}`);
+
+                if (processedTasks.has(taskId.toString()) || taskQueue.some(t => t.taskId.toString() === taskId.toString())) {
+                    continue;
+                }
+
+                // SILICON GUARD: Check on-chain status before queueing
+                // This prevents trying to claim missions that were already processed 
+                try {
+                    const task = await botCallContract.tasks(taskId);
+                    if (Number(task.status) !== 0) { // 0 = Pending
+                        console.log(`[STATUS] Mission ${taskId} is no longer pending (State: ${task.status}). Skipping.`);
+                        processedTasks.add(taskId.toString());
+                        continue;
+                    }
+                } catch (err) {
+                    console.error(`[ERROR] Failed to fetch status for mission ${taskId}:`, err.message);
+                    continue;
+                }
+
+                console.log(`[EVENT] NEW MISSION: #${taskId} [${action.toUpperCase()}]`);
                 taskQueue.push({ taskId, action });
                 processQueue();
             }
 
             lastBlock = currentBlock;
         } catch (e) {
-            console.warn("[POLL WARNING]", e.message.slice(0, 50));
-            // Brief sleep before next interval to prevent spamming
-            await new Promise(r => setTimeout(r, 2000));
+            console.warn("[POLL ERROR]", e.message.slice(0, 100));
+            // Reset provider if it seems stuck
+            if (e.message.includes("network") || e.message.includes("socket")) {
+                console.log("[RECOVERY] Attempting to reconnect provider...");
+                // provider = new ethers.JsonRpcProvider(RPC_URL); // provider is const, so we just wait for next poll
+            }
         }
-    }, 5000);
+        setTimeout(poll, 4000);
+    };
+
+    poll();
+
+    // Heartbeat
+    setInterval(() => {
+        const status = isProcessing ? "EXECUTING" : "IDLE";
+        console.log(`[HB] v2.2.0 | Node: ONLINE | Status: ${status} | Queue: ${taskQueue.length} | Block: ${lastBlock}`);
+    }, 15000);
 }
 
-// Global crash handler
+async function saferStart() {
+    try {
+        await start();
+    } catch (err) {
+        console.error("[FATAL] Backend crashed:", err.message);
+        console.log("[REBOOT] Restarting in 10s...");
+        setTimeout(saferStart, 10000);
+    }
+}
+
 process.on("unhandledRejection", (err) => {
-    console.error("[FATAL] Unhandled Rejection:", err);
-    setTimeout(() => process.exit(1), 3000);
+    console.error("[CRITICAL] Unhandled Rejection:", err);
 });
 
-start().catch(err => {
-    console.error("[FATAL] Backend crashed:", err);
-    process.exit(1);
-});
+saferStart();

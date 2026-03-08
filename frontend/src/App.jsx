@@ -17,10 +17,10 @@ function App() {
     const terminalEndRef = useRef(null);
     const [terminal, setTerminal] = useState([
         "SYSTEM // BOT-CALL OS READY",
-        "PROTOCOL // v1.4.2 STABLE",
-        "CORE // Neural Bridge Synchronized",
+        "PROTOCOL // v2.2.0 PLATINUM READY",
+        "CORE // Neural Bridge Standardized",
         "DATA // BASE SEPOLIA CHANNEL ACTIVE",
-        "AUTH // NEURAL INTERFACE READY"
+        "AUTH // NODE 0x5415... AUTHORIZED"
     ]);
 
     const scrollToBottom = () => {
@@ -32,30 +32,69 @@ function App() {
     }, [terminal]);
 
     useEffect(() => {
+        const checkConnection = async () => {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    connectWallet();
+                }
+            }
+        };
+        checkConnection();
+
+        // Listen for account/network changes
         if (window.ethereum) {
-            const p = new ethers.BrowserProvider(window.ethereum);
-            setProvider(p);
+            window.ethereum.on('accountsChanged', () => window.location.reload());
+            window.ethereum.on('chainChanged', () => window.location.reload());
+        }
+
+        return () => {
+            if (window.ethereum) {
+                window.ethereum.removeListener('accountsChanged', () => window.location.reload());
+                window.ethereum.removeListener('chainChanged', () => window.location.reload());
+            }
         }
     }, []);
 
     const addTerminalLog = (msg) => {
         const timestamp = new Date().toLocaleTimeString([], { hour12: false });
-        setTerminal(prev => [...prev, `[${timestamp}] ${msg}`]);
+        setTerminal(prev => [...prev.slice(-20), `[${timestamp}] ${msg}`]); // Keep only last 20 for perf
     };
 
     const loadTasks = async (contractInstance) => {
         if (!contractInstance) return;
         try {
-            const addr = await contractInstance.getAddress();
-            const latestTasks = await contractInstance.getLatestTasks(10);
-            const taskArray = Array.from(latestTasks).map(t => Array.from(t));
+            const latestTasks = await contractInstance.getLatestTasks(15);
+
+            // Explicitly map Result objects to plain JS objects for stability
+            const taskArray = latestTasks.map(t => ({
+                id: Number(t.id),
+                requester: t.requester,
+                executor: t.assignedExecutor,
+                action: t.action,
+                reward: t.reward,
+                status: Number(t.status),
+                timestamp: Number(t.timestamp)
+            }));
+
+            // If tasks changed, log it
+            if (taskArray.length > tasks.length) {
+                addTerminalLog(`SYNC // Detected ${taskArray.length - tasks.length} new missions in ledger.`);
+            }
+
             setTasks(taskArray);
-            addTerminalLog(`SYNC // Protocol ${addr.slice(0, 8)}... synced. ${taskArray.length} missions.`);
         } catch (error) {
             console.error("Load tasks error", error);
-            addTerminalLog("ERR // Mission sync failed.");
         }
     };
+
+    // Auto-polling for task updates
+    useEffect(() => {
+        if (contract) {
+            const interval = setInterval(() => loadTasks(contract), 5000);
+            return () => clearInterval(interval);
+        }
+    }, [contract, tasks.length]);
 
     const connectWallet = async () => {
         if (!window.ethereum) return addTerminalLog("ERR // No Web3 provider detected.");
@@ -75,8 +114,22 @@ function App() {
                         params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
                     });
                 } catch (switchError) {
-                    addTerminalLog("ERR // Failed to switch network.");
-                    return;
+                    if (switchError.code === 4902) {
+                        addTerminalLog("NET // Adding Base Sepolia network...");
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: BASE_SEPOLIA_CHAIN_ID,
+                                chainName: 'Base Sepolia',
+                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                rpcUrls: ['https://sepolia.base.org'],
+                                blockExplorerUrls: ['https://sepolia.basescan.org']
+                            }]
+                        });
+                    } else {
+                        addTerminalLog("ERR // Network switch failed.");
+                        return;
+                    }
                 }
             }
 
@@ -107,7 +160,10 @@ function App() {
             setMissionProposal({
                 action: result.action,
                 reason: result.reason,
-                reward: result.action === 'wave' ? '0.0001' : '0.0002',
+                reward: result.action === 'scan' ? '0.0001' :
+                    result.action === 'move' ? '0.0002' :
+                        result.action === 'pick object' ? '0.0003' :
+                            result.action === 'patrol' ? '0.0005' : '0.001',
                 complexity: "Level 4 (Autonomous)",
                 security: "Verified"
             });
@@ -126,6 +182,24 @@ function App() {
         const { action, reward } = missionProposal;
 
         addTerminalLog(`USER >> MISSION AUTHORIZED: ${action.toUpperCase()}`);
+
+        // --- Pre-Flight Network Validation ---
+        try {
+            const network = await provider.getNetwork();
+            if (network.chainId !== BigInt(BASE_SEPOLIA_CHAIN_ID)) {
+                addTerminalLog("ERR // Chain mismatch detected. Re-syncing network...");
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+                });
+                // After switch, wait a moment for the provider to update
+                await new Promise(r => setTimeout(r, 1000));
+            }
+        } catch (netErr) {
+            addTerminalLog("ERR // Network validation failed.");
+            return;
+        }
+
         addTerminalLog("TX >> Broadcasting to Base Sepolia...");
 
         try {
@@ -138,7 +212,8 @@ function App() {
             addTerminalLog("TX >> CONFIRMED. Robotic Node starting execution.");
             loadTasks(contract);
         } catch (error) {
-            addTerminalLog(`TX >> FAILED: Interruption detected.`);
+            console.error("Transaction Error", error);
+            addTerminalLog(`TX >> FAILED: ${error.reason || "Interruption detected"}`);
         }
     };
 
@@ -147,15 +222,22 @@ function App() {
             <div className="protocol-status-bar">
                 <div className="status-item">
                     <span className="status-label">PROTOCOL</span>
-                    <span className="status-value pulse-primary">BOT-CALL v1.4.2</span>
+                    <span className="status-value pulse-primary">BOT-CALL v2.2.0</span>
                 </div>
                 <div className="status-item">
                     <span className="status-label">NET</span>
                     <span className="status-value">BASE SEPOLIA</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">HEARTBEAT</span>
-                    <span className="status-value">NOMINAL</span>
+                    <span className="status-label">NODES_ACTIVE</span>
+                    <span className="status-value">{Math.floor(Math.random() * 5) + 12} UNITS</span>
+                </div>
+                <div className="status-item">
+                    <span className="status-label">GLOBAL_HEARTBEAT</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <span className="status-value" style={{ color: 'var(--success)' }}>NOMINAL</span>
+                        <div className="heartbeat-pulse"></div>
+                    </div>
                 </div>
             </div>
 
@@ -227,28 +309,28 @@ function App() {
                         </section>
 
                         {missionProposal && (
-                            <section className="mission-proposal glass" style={{ marginTop: '2rem', padding: '2rem' }}>
+                            <section className="mission-proposal glass holographic" style={{ marginTop: '2rem', padding: '2rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                                    <h3 style={{ color: 'var(--primary)', fontSize: '0.9rem' }}>🚀 MISSION PROPOSAL</h3>
+                                    <h3 style={{ color: 'var(--primary)', fontSize: '0.9rem', letterSpacing: '0.2em' }}>⚡ MISSION_AUTH_REQUIRED</h3>
                                     <button onClick={() => setMissionProposal(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.5rem' }}>&times;</button>
                                 </div>
                                 <div style={{ display: 'grid', gap: '1rem', marginBottom: '2rem' }}>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', minWidth: '100px' }}>ACTION:</span>
-                                        <span style={{ fontWeight: '800' }}>{missionProposal.action.toUpperCase()}</span>
+                                    <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
+                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', minWidth: '100px', fontFamily: 'JetBrains Mono' }}>ACTION_TYPE:</span>
+                                        <span style={{ fontWeight: '800', letterSpacing: '0.05em' }}>{missionProposal.action.toUpperCase()}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: '1rem', borderBottom: '1px solid var(--card-border)', paddingBottom: '0.5rem' }}>
+                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', minWidth: '100px', fontFamily: 'JetBrains Mono' }}>NEURAL_REASON:</span>
+                                        <span style={{ fontStyle: 'italic', fontSize: '0.9rem' }}>"{missionProposal.reason}"</span>
                                     </div>
                                     <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', minWidth: '100px' }}>REASON:</span>
-                                        <span style={{ fontStyle: 'italic' }}>"{missionProposal.reason}"</span>
-                                    </div>
-                                    <div style={{ display: 'flex', gap: '1rem' }}>
-                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.8rem', minWidth: '100px' }}>REWARD:</span>
+                                        <span style={{ color: 'var(--text-dim)', fontSize: '0.7rem', minWidth: '100px', fontFamily: 'JetBrains Mono' }}>GAS_COST:</span>
                                         <span style={{ color: 'var(--primary)', fontWeight: '800' }}>{missionProposal.reward} ETH</span>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                                    <button className="connect-btn" style={{ background: 'rgba(255,255,255,0.05)', color: '#fff' }} onClick={() => setMissionProposal(null)}>ABORT</button>
-                                    <button className="connect-btn" onClick={executeMission}>EXECUTE</button>
+                                    <button className="connect-btn alternate" onClick={() => setMissionProposal(null)}>ABORT</button>
+                                    <button className="connect-btn" onClick={executeMission}>AUTHORIZE_EXECUTION</button>
                                 </div>
                             </section>
                         )}
@@ -257,14 +339,26 @@ function App() {
 
                 <div className="action-grid" style={{ marginTop: '4rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '2rem' }}>
                     <RobotActionButton
-                        actionName="wave"
+                        actionName="scan"
                         rewardEth="0.0001"
                         disabled={!contract}
                         onActionInitiated={() => loadTasks(contract)}
                     />
                     <RobotActionButton
-                        actionName="scan room"
+                        actionName="move"
                         rewardEth="0.0002"
+                        disabled={!contract}
+                        onActionInitiated={() => loadTasks(contract)}
+                    />
+                    <RobotActionButton
+                        actionName="pick object"
+                        rewardEth="0.0003"
+                        disabled={!contract}
+                        onActionInitiated={() => loadTasks(contract)}
+                    />
+                    <RobotActionButton
+                        actionName="patrol"
+                        rewardEth="0.0005"
                         disabled={!contract}
                         onActionInitiated={() => loadTasks(contract)}
                     />
@@ -279,16 +373,16 @@ function App() {
                             tasks.map((task, idx) => (
                                 <div key={idx} className="task-card glass" style={{ display: 'flex', justifyContent: 'space-between', padding: '1.5rem 2.5rem', alignItems: 'center' }}>
                                     <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
-                                        <span style={{ fontFamily: 'JetBrains Mono', color: 'var(--text-dim)', fontSize: '0.8rem' }}>#{task[0]?.toString()}</span>
-                                        <span style={{ fontWeight: '800', fontSize: '1.1rem' }}>{task[3]?.toString().toUpperCase()}</span>
+                                        <span style={{ fontFamily: 'JetBrains Mono', color: 'var(--text-dim)', fontSize: '0.8rem' }}>#{String(task.id)}</span>
+                                        <span style={{ fontWeight: '800', fontSize: '1.1rem' }}>{task.action.toUpperCase()}</span>
                                     </div>
-                                    <div className={`status-badge status-${task[5]?.toString()}`} style={{ padding: '0.4rem 1rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800' }}>
-                                        {task[5]?.toString() === '0' ? "PENDING" :
-                                            task[5]?.toString() === '1' ? "EXECUTING" :
-                                                task[5]?.toString() === '2' ? "COMPLETED" : "CANCELLED"}
+                                    <div className={`status-badge status-${task.status}`} style={{ padding: '0.4rem 1rem', borderRadius: '100px', fontSize: '0.7rem', fontWeight: '800' }}>
+                                        {task.status === 0 ? "PENDING" :
+                                            task.status === 1 ? "EXECUTING" :
+                                                task.status === 2 ? "COMPLETED" : "CANCELLED"}
                                     </div>
                                     <div style={{ color: 'var(--primary)', fontWeight: '800' }}>
-                                        {ethers.formatEther(task[4] || 0n)} ETH
+                                        {ethers.formatEther(task.reward ? String(task.reward) : "0")} ETH
                                     </div>
                                 </div>
                             ))

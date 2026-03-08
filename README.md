@@ -1,87 +1,95 @@
-# BOT-CALL Protocol 🤖
-> Decentralized Pay-Per-Action Robotics on Base.
+# 🤖 BOT-CALL PROTOCOL
+### Decentralized Agentic Robotics & Economic Coordination Layer
 
-BOT-CALL is a protocol that enables on-chain coordination between humans, AI agents, and autonomous robotic units. It provides a secure, trustless primitives for "renting" robotic time for specific tasks using the Base blockchain.
+**BOT-CALL** is a futuristic protocol that bridges the gap between AI agents and real-world robotic execution. It provides an on-chain Primitive for "Pay-per-action" robotics, allowing any wallet or autonomous agent to hire a robotic unit for physical tasks on the Base network.
 
 ---
 
-## 🚀 System Architecture
+## 🌌 System Architecture
 
 ```mermaid
 graph TD
-    A[UI / AI Agent] -->|requestAction| B(Smart Contract)
-    B -->|ActionRequested Event| C[Backend Node]
-    C -->|Trigger| D[Robot Simulator / Hardware]
-    D -->|Telemetry| C
-    C -->|completeAction| B
-    B -->|ETH Release| C
+    User((User / AI Agent)) -->|Authorizes Mission| FE[Frontend UI]
+    FE -->|requestAction + ETH| SC[Smart Contract - Base]
+    SC -->|Emit ActionRequested| BL[Backend Listener]
+    BL -->|Neural Reasoning| AI[Groq Llama 3]
+    BL -->|Execute Command| RS[Robot Simulator]
+    RS -->|Success Signal| BL
+    BL -->|completeAction| SC
+    SC -->|Release Reward| BL
 ```
 
 ## 🛠️ Tech Stack
-- **Blockchain**: Base (Ethereum L2)
-- **Smart Contracts**: Solidity (Hardhat)
-- **Backend / Oracles**: Node.js (Ethers.js v6)
-- **Intelligence**: Groq Llama-3 (Cloud Inference)
-- **Frontend**: React (Vite, Glassmorphism UI)
+- **Blockchain**: Base Sepolia (L2)
+- **Framework**: React + Vite
+- **Smart Contracts**: Solidity + Hardhat + OpenZeppelin
+- **Backend**: Node.js + Ethers.js v6
+- **AI Brain**: Groq SDK (Llama 3 70B)
+- **Deployment**: Vercel (Frontend) + GitHub Actions (CI/CD)
 
 ---
 
-## 📡 Protocol Workflow (MVP)
+## 🚀 Installation & Setup
 
-1. **Mission Request**: User sends ETH as a reward to the `BotCall` contract via `requestAction(string action)`.
-2. **Event Polling**: The Backend Node scans the blockchain for `ActionRequested` events.
-3. **Reasoning**: The AI Strategist (Groq-Llama3) verifies the action and formulates an execution bridge.
-4. **Execution**: The Robotic Unit executes the action (Simulation logic) and generates telemetry.
-5. **Settlement**: The Node calls `completeAction(taskId)` with proof of work, triggering the contract to release the ETH reward to the robot.
-
----
-
-## 💻 Installation & Setup
-
-### 1. Requirements
-- Node.js (v18+)
-- MetaMask (Base Sepolia Testnet)
+### 1. Prerequisites
+- Node.js v18+
+- MetaMask Wallet
 - Groq API Key
+- Base Sepolia Testnet ETH
 
 ### 2. Environment Configuration
-Create a `.env` in the root:
+Create a `.env` file in the root directory:
 ```env
-PRIVATE_KEY=your_robot_wallet_pk
+PRIVATE_KEY=your_private_key
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
-CONTRACT_ADDRESS=0x8A67A55B496A4291F0F201efC221E260d84b1e41
-GROQ_API_KEY=your_groq_key
+CONTRACT_ADDRESS=your_deployed_contract_address
+GROQ_API_KEY=your_groq_api_key
+
+VITE_CONTRACT_ADDRESS=your_deployed_contract_address
+VITE_GROQ_API_KEY=your_groq_api_key
+VITE_RPC_URL=https://sepolia.base.org
 ```
 
-### 3. Deploy & Run
+### 3. Deployment
 ```bash
 # Install dependencies
 npm install
 
-# Start Backend Node
+# Deploy Smart Contract
+npm run deploy:base-sepolia
+
+# Start Backend Robotic Node
 npm run backend
 
-# Start Frontend
-cd frontend
-npm install
-npm run dev
+# Start Frontend Terminal
+cd frontend && npm run dev
 ```
 
 ---
 
-## ✅ Performance & Security v1.4.2
-- **Nonce Shield**: Robust nonce management ensures zero transaction collisions.
-- **Polling 2.0**: Advanced block-range polling logic for zero missed events.
-- **EVM Compatibility**: Compiled for `paris` EVM to maximize stability on Base.
-- **Design**: Premium glassmorphism UI with natural language AI interface.
+## 🦾 Workflow Guide
+1. **Connect Terminal**: Enter the dashboard and sync your MetaMask wallet to the Base Sepolia network.
+2. **AI Command**: Use the "AI Brain Interface" to send natural language requests like *"Go check the perimeter"* or *"Scan for objects"*.
+3. **Reasoning**: The Llama 3 brain will interpret your intent, decide on the best physical action, and propose a mission.
+4. **Authorize**: Confirm the transaction. Your ETH reward is locked in the contract.
+5. **Execution**: The backend listener detects the request, triggers the simulator, and provides a real-time status feed.
+6. **Finalization**: Once complete, the payment is released to the robotic node automatically.
 
 ---
 
 ## 🗺️ Roadmap
-- [ ] Multi-Robot Fleet Management
-- [ ] ZK-Proofs for Hardware Execution 
-- [ ] Robot Reputation & Staking (Slashing for failures)
-- [ ] Hardware API Bridge (ROS2 Integration)
+- [ ] **Phase 2**: Integration with physical ROS (Robot Operating System) nodes.
+- [ ] **Phase 3**: Task Verification Oracles (using DePIN nodes for proof-of-work).
+- [ ] **Phase 4**: Robot Marketplace & Reputation System.
+- [ ] **Phase 5**: Multi-chain support for cross-border robotic economy.
 
 ---
-**Created by nayrbryanGaming for the Base Robotics Hackathon.**
-"The bridge between Silicon and Reality."
+
+## 🛡️ Security
+- Non-reentrant reward release.
+- Ownership-protected administrative functions.
+- Resilient backend polling with recovery mechanisms.
+
+---
+**Developed for the Future of Agentic Robotics.**  
+*© 2026 BOT-CALL Protocol*
