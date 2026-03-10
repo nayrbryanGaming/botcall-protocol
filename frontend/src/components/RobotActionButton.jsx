@@ -24,9 +24,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
         } catch (error) {
             console.error("Transmission failed:", error);
             const reason = error.reason || error.message;
-            if (reason.includes("user rejected")) {
-                // Ignore user rejection
-            } else {
+            if (!reason.includes("user rejected")) {
                 alert(`MISSION INTERFACE ERROR: ${reason}`);
             }
         } finally {
@@ -34,32 +32,72 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
         }
     };
 
-    const icon =
-        actionName === 'scan' ? '📡' :
-            actionName === 'move' ? '🧭' :
-                actionName === 'pick object' ? '🤖' :
-                    actionName === 'patrol' ? '🛡️' :
-                        actionName === 'recharge' ? '⚡' : '⚙️';
+    const icons = {
+        scan: '📡',
+        move: '🧭',
+        'pick object': '🦾',
+        patrol: '🛡️',
+        recharge: '⚡'
+    };
+
+    const icon = icons[actionName] || '⚙️';
 
     return (
-        <div className="robot-card glass holographic" onClick={!loading && !disabled ? handleRequest : undefined} style={{ cursor: 'pointer', position: 'relative' }}>
-            <div className="tech-corner-top"></div>
-            <div style={{ fontSize: '3.5rem', marginBottom: '1.5rem', filter: 'drop-shadow(0 0 15px var(--primary-glow))' }}>{icon}</div>
-            <h3 style={{ textTransform: 'uppercase', letterSpacing: '0.2em', fontWeight: '950', fontSize: '1.2rem' }}>{actionName}</h3>
-            <p style={{ color: 'var(--text-dim)', fontSize: '0.75rem', margin: '1rem 0', minHeight: '3em', fontFamily: 'var(--font-mono)' }}>
-                [AUTH_REQUIRED] // Execute {actionName} on robotic cluster.
+        <div 
+            className={`robot-card glass ${loading ? 'holographic' : ''}`} 
+            onClick={!loading && !disabled ? handleRequest : undefined} 
+            style={{ 
+                cursor: loading || disabled ? 'not-allowed' : 'pointer',
+                padding: '2.5rem 1.5rem',
+                textAlign: 'center',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem'
+            }}
+        >
+            <div style={{ 
+                fontSize: '3rem', 
+                marginBottom: '0.5rem',
+                filter: loading ? 'drop-shadow(0 0 20px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
+                transition: 'var(--transition)'
+            }}>{icon}</div>
+            
+            <h3 style={{ 
+                textTransform: 'uppercase', 
+                letterSpacing: '0.15em', 
+                fontWeight: '800', 
+                fontSize: '1.1rem',
+                color: '#fff'
+            }}>{actionName}</h3>
+            
+            <p style={{ 
+                color: 'var(--text-dim)', 
+                fontSize: '0.7rem', 
+                fontFamily: 'var(--font-mono)',
+                lineHeight: '1.4'
+            }}>
+                [AUTH_L4] // Execute target procedure on remote cluster.
             </p>
-            <div style={{ marginBottom: '2rem', fontSize: '1.5rem', fontWeight: '950', color: 'var(--primary)', textShadow: '0 0 10px var(--primary-glow)' }}>
-                {rewardEth} <span style={{ fontSize: '0.8rem' }}>ETH</span>
+            
+            <div style={{ 
+                margin: '1.5rem 0', 
+                fontSize: '1.4rem', 
+                fontWeight: '900', 
+                color: 'var(--primary)',
+                textShadow: '0 0 10px var(--primary-glow)' 
+            }}>
+                {rewardEth} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ETH</span>
             </div>
+            
             <button
                 className="connect-btn"
-                style={{ width: '100%', pointerEvents: 'none' }}
-                disabled={loading || disabled || !CONTRACT_ADDRESS}
+                style={{ width: '100%', fontSize: '0.75rem', padding: '0.75rem' }}
+                disabled={loading || disabled}
+                onClick={(e) => e.stopPropagation()}
             >
-                {loading ? ">>> [LINKING...]" : `AUTHORIZE_${actionName.toUpperCase()}`}
+                {loading ? "LINKING..." : `EXECUTE`}
             </button>
-            <div className="tech-corner-bottom"></div>
         </div>
     );
 };

@@ -1,13 +1,13 @@
-export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0x2A62eeC69cB289cFAfFc6a37503Fd66fa5f751cF";
+export const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "0xEf395242446652F7057831D5033fE4aB9d6e9C5f";
 
 export const BASE_SEPOLIA_CHAIN_ID = "0x14a34"; // 84532
 
 export const BOT_CALL_ABI = [
     "function requestAction(string action) external payable",
-    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward)",
-    "event ActionExecuting(uint256 indexed taskId, address indexed executor)",
-    "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward)",
-    "event ActionCancelled(uint256 indexed taskId)",
+    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward, uint256 timestamp)",
+    "event ActionExecuting(uint256 indexed taskId, address indexed executor, uint256 timestamp)",
+    "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward, uint256 timestamp)",
+    "event ActionCancelled(uint256 indexed taskId, uint256 timestamp)",
     "event RobotRegistered(address indexed robot, string metadata)",
     "function tasks(uint256) view returns (uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)",
     "function robots(address) view returns (bool isRegistered, string metadata, uint256 tasksCompleted)",

@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title BotCall Protocol (Production Alpha)
+ * @title BotCall Protocol (Platinum MVP)
  * @dev On-chain infrastructure for Agentic Robotics Economic Coordination.
  */
 contract BotCall is Ownable, ReentrancyGuard {
@@ -32,10 +32,11 @@ contract BotCall is Ownable, ReentrancyGuard {
     mapping(address => Robot) public robots;
     
     event RobotRegistered(address indexed robot, string metadata);
-    event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward);
-    event ActionExecuting(uint256 indexed taskId, address indexed executor);
-    event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward);
-    event ActionCancelled(uint256 indexed taskId);
+    event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward, uint256 timestamp);
+    event ActionExecuting(uint256 indexed taskId, address indexed executor, uint256 timestamp);
+    event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward, uint256 timestamp);
+    event ActionCancelled(uint256 indexed taskId, uint256 timestamp);
+    event EmergencyWithdraw(address indexed owner, uint256 amount);
 
     constructor() Ownable(msg.sender) {}
 
@@ -64,7 +65,7 @@ contract BotCall is Ownable, ReentrancyGuard {
             timestamp: block.timestamp
         });
 
-        emit ActionRequested(taskCount, msg.sender, _action, msg.value);
+        emit ActionRequested(taskCount, msg.sender, _action, msg.value, block.timestamp);
     }
 
     /**
@@ -78,7 +79,7 @@ contract BotCall is Ownable, ReentrancyGuard {
         task.status = TaskStatus.Executing;
         task.assignedExecutor = msg.sender;
         
-        emit ActionExecuting(_taskId, msg.sender);
+        emit ActionExecuting(_taskId, msg.sender, block.timestamp);
     }
 
     /**
@@ -96,7 +97,7 @@ contract BotCall is Ownable, ReentrancyGuard {
         (bool success, ) = payable(msg.sender).call{value: reward}("");
         require(success, "Payment failed");
 
-        emit ActionCompleted(_taskId, msg.sender, reward);
+        emit ActionCompleted(_taskId, msg.sender, reward, block.timestamp);
     }
 
     /**
@@ -113,7 +114,7 @@ contract BotCall is Ownable, ReentrancyGuard {
         (bool success, ) = payable(msg.sender).call{value: reward}("");
         require(success, "Refund failed");
 
-        emit ActionCancelled(_taskId);
+        emit ActionCancelled(_taskId, block.timestamp);
     }
 
     /**
@@ -127,6 +128,16 @@ contract BotCall is Ownable, ReentrancyGuard {
             latestTasks[i] = tasks[taskCount - i];
         }
         return latestTasks;
+    }
+
+    /**
+     * @dev Emergency withdraw for the owner.
+     */
+    function emergencyWithdraw() external onlyOwner nonReentrant {
+        uint256 balance = address(this).balance;
+        (bool success, ) = payable(owner()).call{value: balance}("");
+        require(success, "Withdrawal failed");
+        emit EmergencyWithdraw(owner(), balance);
     }
 
     receive() external payable {}

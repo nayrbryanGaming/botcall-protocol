@@ -19,14 +19,15 @@ const provider = new ethers.JsonRpcProvider(RPC_URL);
 const wallet = new ethers.Wallet(PRIVATE_KEY, provider);
 
 const BOT_CALL_ABI = [
-    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward)",
-    "event ActionExecuting(uint256 indexed taskId, address indexed executor)",
-    "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward)",
-    "event ActionCancelled(uint256 indexed taskId)",
+    "event ActionRequested(uint256 indexed taskId, address indexed requester, string action, uint256 reward, uint256 timestamp)",
+    "event ActionExecuting(uint256 indexed taskId, address indexed executor, uint256 timestamp)",
+    "event ActionCompleted(uint256 indexed taskId, address indexed executor, uint256 reward, uint256 timestamp)",
+    "event ActionCancelled(uint256 indexed taskId, uint256 timestamp)",
     "function startExecuting(uint256 _taskId) external",
     "function completeAction(uint256 _taskId) external",
     "function robots(address) view returns (bool isRegistered, string metadata, uint256 tasksCompleted)",
-    "function registerRobot(string _metadata) external"
+    "function registerRobot(string _metadata) external",
+    "function tasks(uint256) view returns (uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)"
 ];
 
 const botCallContract = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, wallet);
@@ -52,13 +53,11 @@ async function sendTxWithRetry(contractFunc, args, retries = 3) {
     for (let i = 0; i < retries; i++) {
         try {
             const nonce = await getNextNonce();
-            // console.log(`[TX] Sending with nonce: ${nonce}`);
             const tx = await contractFunc(...args, { nonce });
             return await tx.wait();
         } catch (error) {
             console.error(`[TX ERROR] Attempt ${i + 1}:`, error.message.slice(0, 100));
 
-            // If nonce issue, reset and retry from latest
             if (error.message.includes("nonce") || error.message.includes("already be used")) {
                 currentNonce = await provider.getTransactionCount(wallet.address, "latest");
                 continue;
@@ -81,30 +80,33 @@ async function processQueue() {
         return;
     }
 
-    console.log(`\n[QUEUE] STARTING MISSION #${task.taskId} [${task.action.toUpperCase()}]`);
+    console.log(`\n=========================================`);
+    console.log(`🚀 [MISSION] STARTING MISSION #${task.taskId}`);
+    console.log(`[ACTION] ${task.action.toUpperCase()}`);
+    console.log(`=========================================`);
 
     try {
         // 1. Claim Task
-        process.stdout.write("[PROTOCOL] Claiming... ");
+        process.stdout.write("[PROTOCOL] Claiming mission... ");
         try {
             await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
-            console.log("SUCCESS");
+            console.log("SUCCESS ✅");
         } catch (err) {
             if (err.message.includes("Task not pending")) {
-                console.log("ALREADY CLAIMED");
+                console.log("ALREADY CLAIMED ⚠️");
             } else {
                 throw err;
             }
         }
 
         // 2. AI Brain
-        console.log("[BRAIN] Analyzing...");
-        let thought = "Initializing sensors...";
+        console.log("[BRAIN] Analyzing mission parameters...");
+        let thought = "Optimizing robotic trajectories for maximum efficiency.";
         try {
             const chat = await groq.chat.completions.create({
                 messages: [
-                    { role: "system", content: "You are a robot brain. 1 sentence high-tech thought." },
-                    { role: "user", content: task.action }
+                    { role: "system", content: "You are a robot brain. 1 sentence high-tech thought about the mission." },
+                    { role: "user", content: `Mission: ${task.action}` }
                 ],
                 model: "llama3-8b-8192",
             });
@@ -113,23 +115,23 @@ async function processQueue() {
         console.log(`[BRAIN] Analysis: "${thought}"`);
 
         // 3. Simulation
-        console.log("[SIM] Physical execution...");
-        const res = await executeAction(task.action);
-        // console.log(`[SIM] RESULT: ${res.log}`); // This line was removed as per the diff
+        console.log("[PHYSICAL] Executing payload...");
+        await executeAction(task.action);
 
         // 4. Finalize
-        process.stdout.write("[PROTOCOL] Finalizing proof... ");
-        const receipt = await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
-        console.log("MISSION ACCOMPLISHED");
+        process.stdout.write("[PROTOCOL] Submitting proof of completion... ");
+        await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
+        console.log("DONE ✅");
 
+        console.log(`\n✨ [MISSION] MISSION #${task.taskId} ACCOMPLISHED`);
         processedTasks.add(task.taskId.toString());
 
     } catch (error) {
-        console.log("FAILED");
+        console.log("FAILED ❌");
         console.error(`[ERROR] Task #${task.taskId}:`, error.reason || error.message);
     }
 
-    console.log("-----------------------------------------");
+    console.log("=========================================\n");
     isProcessing = false;
     setTimeout(processQueue, 1000);
 }
@@ -138,33 +140,32 @@ async function checkAndRegister() {
     process.stdout.write(`[AUTH] Checking node ${wallet.address.slice(0, 8)}... `);
     try {
         const balance = await provider.getBalance(wallet.address);
-        console.log(`[AUTH] Balance: ${ethers.formatEther(balance)} ETH`);
+        console.log(`Balance: ${ethers.formatEther(balance)} ETH`);
 
         if (balance === 0n) {
-            console.warn("[CRITICAL] Wallet has 0 ETH. Backend will not be able to process missions.");
+            console.warn("[CRITICAL] Wallet has 0 ETH. Missions cannot be processed.");
         }
 
         const info = await botCallContract.robots(wallet.address);
         if (!info.isRegistered) {
-            console.log("UNREGISTERED.");
             process.stdout.write("[AUTH] Registering robotic node... ");
-            await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_PROD_NODE_V3"]);
-            console.log("REGISTERED");
+            await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_PLATINUM_NODE_V3"]);
+            console.log("REGISTERED ✅");
         } else {
-            console.log(`VALIDATED | EXP: ${info.tasksCompleted}`);
+            console.log(`VALIDATED ✅ | Missions Completed: ${info.tasksCompleted}`);
         }
     } catch (error) {
-        console.log("AUTH ERROR");
+        console.log("AUTH ERROR ❌");
         console.error(error.message);
     }
 }
 
 async function start() {
-    console.log("\n🤖 BOT-CALL BACKEND // v2.3.0 TITAN FINALE");
+    console.log("\n🤖 BOT-CALL BACKEND // PLATINUM MVP");
     console.log("=========================================");
-    console.log(`RPC: ${RPC_URL}`);
+    console.log(`RPC:      ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);
-    console.log(`NODE: ${wallet.address}`);
+    console.log(`NODE:     ${wallet.address}`);
     console.log("=========================================\n");
 
     await checkAndRegister();
@@ -182,10 +183,7 @@ async function start() {
                 return;
             }
 
-            // Look back 10 blocks to ensure no events are missed during RPC lag
-            const startBlock = Math.max(0, lastBlock - 10);
-            // console.log(`[POLL] Checking ${startBlock} to ${currentBlock}`);
-
+            const startBlock = Math.max(0, lastBlock - 5);
             const events = await botCallContract.queryFilter("ActionRequested", startBlock, currentBlock);
 
             for (const event of events) {
@@ -196,21 +194,17 @@ async function start() {
                     continue;
                 }
 
-                // SILICON GUARD: Check on-chain status before queueing
-                // This prevents trying to claim missions that were already processed 
                 try {
                     const task = await botCallContract.tasks(taskId);
                     if (Number(task.status) !== 0) { // 0 = Pending
-                        console.log(`[STATUS] Mission ${taskId} is no longer pending (State: ${task.status}). Skipping.`);
                         processedTasks.add(taskId.toString());
                         continue;
                     }
                 } catch (err) {
-                    console.error(`[ERROR] Failed to fetch status for mission ${taskId}:`, err.message);
                     continue;
                 }
 
-                console.log(`[EVENT] NEW MISSION: #${taskId} [${action.toUpperCase()}]`);
+                console.log(`\n🔔 [EVENT] NEW MISSION DETECTED: #${taskId} [${action.toUpperCase()}]`);
                 taskQueue.push({ taskId, action });
                 processQueue();
             }
@@ -218,11 +212,6 @@ async function start() {
             lastBlock = currentBlock;
         } catch (e) {
             console.warn("[POLL ERROR]", e.message.slice(0, 100));
-            // Reset provider if it seems stuck
-            if (e.message.includes("network") || e.message.includes("socket")) {
-                console.log("[RECOVERY] Attempting to reconnect provider...");
-                // provider = new ethers.JsonRpcProvider(RPC_URL); // provider is const, so we just wait for next poll
-            }
         }
         setTimeout(poll, 4000);
     };
@@ -232,8 +221,8 @@ async function start() {
     // Heartbeat
     setInterval(() => {
         const status = isProcessing ? "EXECUTING" : "IDLE";
-        console.log(`[HB] v2.3.0 | Node: ONLINE | Status: ${status} | Queue: ${taskQueue.length} | Block: ${lastBlock}`);
-    }, 15000);
+        console.log(`[HB] ONLINE | Status: ${status} | Queue: ${taskQueue.length} | Block: ${lastBlock}`);
+    }, 30000);
 }
 
 async function saferStart() {

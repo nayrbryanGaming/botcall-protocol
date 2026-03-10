@@ -1,19 +1,42 @@
-name: Premium Vercel Deployment
+name: PLATINUM_MVP_DEPLOYMENT
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v20
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.ORG_ID }}
-          vercel-project-id: ${{ secrets.PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: .
+    - uses: actions/checkout@v4
+
+    - name: Use Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Root Dependencies
+      run: npm install
+
+    - name: Run Smart Contract Tests
+      run: npx hardhat test
+      env:
+        PRIVATE_KEY: ${{ secrets.PRIVATE_KEY }}
+        BASE_SEPOLIA_RPC_URL: ${{ secrets.BASE_SEPOLIA_RPC_URL }}
+
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm install
+        npm run build
+      env:
+        VITE_CONTRACT_ADDRESS: ${{ secrets.VITE_CONTRACT_ADDRESS }}
+        VITE_GROQ_API_KEY: ${{ secrets.VITE_GROQ_API_KEY }}
+        VITE_RPC_URL: ${{ secrets.VITE_RPC_URL }}
+
+    - name: Deployment Status
+      run: echo "PLATINUM_MVP: BUILD_SUCCESSFUL. READY_FOR_VERCEL."
