@@ -39,18 +39,44 @@ const RobotVisualizer = ({ status, action }) => {
             {isExecuting && <animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite" />}
           </circle>
           {/* Arms/Thrusters */}
-          <rect x="15" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
-            {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 20 55" to="-30 20 55" dur="0.5s" repeatCount="indefinite" />}
-          </rect>
-          <rect x="75" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
-            {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 80 55" to="30 80 55" dur="0.5s" repeatCount="indefinite" />}
-          </rect>
+          <g>
+            <rect x="15" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
+              {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 20 55" to="-30 20 55" dur="0.5s" repeatCount="indefinite" />}
+            </rect>
+            {isExecuting && action === 'pick object' && (
+              <g transform="translate(15, 65)">
+                <path d="M0,0 L-5,10 M10,0 L15,10" stroke="var(--primary)" strokeWidth="2">
+                  <animateTransform attributeName="transform" type="scale" values="1,1;0.5,1;1,1" dur="1s" repeatCount="indefinite" />
+                </path>
+              </g>
+            )}
+          </g>
+          <g>
+            <rect x="75" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
+              {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 80 55" to="30 80 55" dur="0.5s" repeatCount="indefinite" />}
+            </rect>
+            {isExecuting && action === 'pick object' && (
+              <g transform="translate(75, 65)">
+                <path d="M0,0 L-5,10 M10,0 L15,10" stroke="var(--primary)" strokeWidth="2">
+                  <animateTransform attributeName="transform" type="scale" values="1,1;0.5,1;1,1" dur="1s" repeatCount="indefinite" />
+                </path>
+              </g>
+            )}
+          </g>
+          {/* Scan Line / Patrol Laser */}
+          {isExecuting && (action === 'scan' || action === 'patrol') && (
+            <line x1="10" y1="50" x2="90" y2="50" stroke={action === 'patrol' ? 'var(--error)' : 'var(--primary)'} strokeWidth="1" opacity="0.6">
+              <animate attributeName="y1" values="40;70;40" dur="2s" repeatCount="indefinite" />
+              <animate attributeName="y2" values="40;70;40" dur="2s" repeatCount="indefinite" />
+              {action === 'patrol' && <animate attributeName="stroke-width" values="1;3;1" dur="0.5s" repeatCount="indefinite" />}
+            </line>
+          )}
           {/* Antenna */}
           <line x1="50" y1="40" x2="50" y2="25" stroke="var(--primary)" strokeWidth="2" />
           <circle cx="50" cy="25" r="2" fill="var(--primary)" />
         </svg>
 
-        {/* Action Specific Overlays */}
+        {/* Action Specific Overlays (HTML-based) */}
         {isExecuting && action === 'scan' && (
           <div className="animate-scan" style={{ top: '0', left: '-20px', width: '160px' }}></div>
         )}

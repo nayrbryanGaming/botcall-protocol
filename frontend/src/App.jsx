@@ -211,7 +211,7 @@ function App() {
                     <button className="connect-btn" onClick={connectWallet}>Initialize Node</button>
                 ) : (
                     <div className="account-info glass" style={{ padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.85rem' }}>
-                        <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>●</span>
+                        <span style={{ color: 'var(--success)', marginRight: '0.5rem', fontWeight: 'bold' }}>ONLINE</span>
                         {account.slice(0, 6)}...{account.slice(-4)}
                     </div>
                 )}
@@ -230,7 +230,7 @@ function App() {
                     <div className="left-col">
                         <section className="ai-agent-card glass">
                             <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <span style={{ color: 'var(--primary)' }}>🧠</span>
+                                <span style={{ color: 'var(--primary)', fontFamily: 'var(--font-mono)', fontWeight: 'bold' }}>[NEURAL_HUB]</span>
                                 <h3 style={{ fontSize: '0.9rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Command Interface</h3>
                             </div>
                             <form className="ai-form" onSubmit={handleAiCommand} style={{ display: 'flex', gap: '0.75rem' }}>
@@ -278,18 +278,27 @@ function App() {
                 </div>
 
                 {missionProposal && (
-                    <section className="mission-proposal glass holographic" style={{ marginTop: '3rem', padding: '2.5rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                            <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '1rem' }}>⚡ MISSION PROPOSAL</h3>
-                            <button onClick={() => setMissionProposal(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', fontSize: '1.2rem' }}>&times;</button>
+                    <section className="mission-proposal glass holographic" style={{ marginTop: '3rem', padding: '2.5rem', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
+                        <div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                                <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '1rem' }}>PROTOCOL_V3 // MISSION PROPOSAL</h3>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginBottom: '2rem', fontSize: '0.9rem' }}>
+                                <div style={{ color: 'var(--text-dim)' }}>Action:</div>
+                                <div style={{ fontWeight: '800', color: 'var(--primary)' }}>{missionProposal.action.toUpperCase()}</div>
+                                <div style={{ color: 'var(--text-dim)' }}>Analysis:</div>
+                                <div style={{ fontStyle: 'italic' }}>"{missionProposal.reason}"</div>
+                                <div style={{ color: 'var(--text-dim)' }}>Neural Fee:</div>
+                                <div style={{ fontWeight: '800', color: 'var(--primary)' }}>{missionProposal.reward} ETH</div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button className="connect-btn" onClick={executeMission} style={{ flex: 1 }}>Authorize Protocol</button>
+                                <button className="connect-btn" onClick={() => setMissionProposal(null)} style={{ flex: 0.5, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}>Abort</button>
+                            </div>
                         </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginBottom: '2rem', fontSize: '0.9rem' }}>
-                            <div style={{ color: 'var(--text-dim)' }}>Action:</div>
-                            <div style={{ fontWeight: '800', color: 'var(--primary)' }}>{missionProposal.action.toUpperCase()}</div>
-                            <div style={{ fontStyle: 'italic' }}>"{missionProposal.reason}"</div>
-                        </div>
-                        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                            <button className="connect-btn" onClick={executeMission}>Confirm Execution</button>
+                        <div className="preview-container" style={{ borderLeft: '1px solid var(--glass-border)', paddingLeft: '2rem' }}>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>PREVIEW // SIMULATION_NODE</div>
+                            <RobotVisualizer status={1} action={missionProposal.action} />
                         </div>
                     </section>
                 )}

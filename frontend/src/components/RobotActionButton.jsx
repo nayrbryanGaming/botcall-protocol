@@ -37,7 +37,8 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
         move: 'NAV_02',
         'pick object': 'ACT_03',
         patrol: 'SEC_04',
-        recharge: 'PWR_05'
+        recharge: 'PWR_05',
+        wave: 'WAV_06'
     };
 
     const icon = icons[actionName] || 'SYS_XX';
