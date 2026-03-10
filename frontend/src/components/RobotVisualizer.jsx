@@ -1,0 +1,85 @@
+import React from 'react';
+
+const RobotVisualizer = ({ status, action }) => {
+  // status: 0 (Pending), 1 (Executing), 2 (Completed)
+  const isExecuting = status === 1;
+  const isCompleted = status === 2;
+  const isPending = status === 0;
+
+  return (
+    <div className="robot-visualizer glass" style={{ 
+      height: '300px', 
+      position: 'relative', 
+      overflow: 'hidden',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'rgba(0,0,0,0.4)',
+      border: '1px solid var(--glass-border)',
+      borderRadius: '20px',
+      marginBottom: '2rem'
+    }}>
+      {/* HUD Background Decorations */}
+      <div style={{ position: 'absolute', top: '10px', left: '10px', fontSize: '0.6rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        VISUAL_FEED_01 // CRC: {Math.random().toString(16).slice(2, 6).toUpperCase()}
+      </div>
+      <div style={{ position: 'absolute', bottom: '10px', right: '10px', fontSize: '0.6rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>
+        LATENCY: 24ms // STABILITY: 99.9%
+      </div>
+
+      <div className="drone-container" style={{ position: 'relative' }}>
+        {/* Core Robot SVG (Professional Drone/Mech style) */}
+        <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Main Body */}
+          <path d="M30 40H70L80 50V60L70 70H30L20 60V50L30 40Z" stroke="var(--primary)" strokeWidth="2" fill="rgba(0,242,255,0.05)" />
+          {/* Eye/Sensor */}
+          <circle cx="50" cy="50" r="8" stroke="var(--primary)" strokeWidth="2" />
+          <circle cx="50" cy="50" r="3" fill={isExecuting ? "var(--error)" : "var(--primary)"} className={isExecuting ? "pulse-sensor" : ""}>
+            {isExecuting && <animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite" />}
+          </circle>
+          {/* Arms/Thrusters */}
+          <rect x="15" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2" />
+          <rect x="75" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2" />
+          {/* Antenna */}
+          <line x1="50" y1="40" x2="50" y2="25" stroke="var(--primary)" strokeWidth="2" />
+          <circle cx="50" cy="25" r="2" fill="var(--primary)" />
+        </svg>
+
+        {/* Action Specific Overlays */}
+        {isExecuting && action === 'scan' && (
+          <div className="animate-scan" style={{ top: '0', left: '-20px', width: '160px' }}></div>
+        )}
+        
+        {isExecuting && (action === 'move' || action === 'patrol') && (
+          <div style={{ position: 'absolute', bottom: '-20px', left: '50%', transform: 'translateX(-50%)' }}>
+            <div className="animate-pulse" style={{ width: '40px', height: '10px', borderRadius: '50%', top: '0' }}></div>
+          </div>
+        )}
+
+        {isCompleted && (
+          <div style={{ position: 'absolute', top: '-10px', right: '-10px' }}>
+             <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+               <path d="M5 13l4 4L19 7" stroke="var(--success)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+             </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Action Text Display */}
+      <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
+        <div style={{ fontSize: '0.7rem', color: 'var(--text-dim)', letterSpacing: '0.2em', textTransform: 'uppercase', marginBottom: '0.25rem' }}>
+          Current Task
+        </div>
+        <div style={{ fontSize: '1.2rem', fontWeight: '900', letterSpacing: '0.05em', color: isExecuting ? 'var(--primary)' : '#fff' }}>
+          {isPending ? "IDLE_AWAITING_INPUT" : action?.toUpperCase()}
+        </div>
+        <div style={{ fontSize: '0.65rem', color: isExecuting ? 'var(--primary)' : 'var(--text-dim)', fontFamily: 'var(--font-mono)', marginTop: '0.5rem' }}>
+          {isExecuting ? ">>> EXECUTING_PROCEDURE_LOG..." : isCompleted ? ">>> TASK_SUCCESS_TERMINATED" : ">>> STANDBY_MODE"}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RobotVisualizer;

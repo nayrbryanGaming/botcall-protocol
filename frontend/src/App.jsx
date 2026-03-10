@@ -3,6 +3,7 @@ import { ethers } from 'ethers';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
 import RobotActionButton from './components/RobotActionButton';
+import RobotVisualizer from './components/RobotVisualizer';
 import './index.css';
 
 function App() {
@@ -251,7 +252,7 @@ function App() {
                     </div>
 
                     <div className="right-col">
-                        <section className="robot-terminal glass" style={{ height: '100%' }}>
+                        <section className="robot-terminal glass" style={{ height: '300px', marginBottom: '2rem' }}>
                             <div className="terminal-header">
                                 <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>TELEMETRY_FEED // ACTIVE</span>
                             </div>
@@ -262,6 +263,11 @@ function App() {
                                 <div ref={terminalEndRef} />
                             </div>
                         </section>
+
+                        <RobotVisualizer 
+                            status={tasks.length > 0 ? tasks[0].status : 0} 
+                            action={tasks.length > 0 ? tasks[0].action : 'idle'} 
+                        />
                     </div>
                 </div>
 

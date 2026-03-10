@@ -39,4 +39,4 @@ jobs:
         VITE_RPC_URL: ${{ secrets.VITE_RPC_URL }}
 
     - name: Deployment Status
-      run: echo "PLATINUM_MVP: BUILD_SUCCESSFUL. READY_FOR_VERCEL."
+      run: echo "PLATINUM_MVP_BUILD_SUCCESSFUL_READY_FOR_VERCEL"

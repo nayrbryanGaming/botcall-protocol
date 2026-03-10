@@ -33,14 +33,14 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
     };
 
     const icons = {
-        scan: '📡',
-        move: '🧭',
-        'pick object': '🦾',
-        patrol: '🛡️',
-        recharge: '⚡'
+        scan: 'SCN_01',
+        move: 'NAV_02',
+        'pick object': 'ACT_03',
+        patrol: 'SEC_04',
+        recharge: 'PWR_05'
     };
 
-    const icon = icons[actionName] || '⚙️';
+    const icon = icons[actionName] || 'SYS_XX';
 
     return (
         <div 

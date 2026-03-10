@@ -419,6 +419,52 @@ header {
   100% { text-shadow: 0 0 5px var(--primary-glow); }
 }
 
+/* Robot Visualizer Keyframes */
+@keyframes scan-line {
+  0% { transform: translateY(-50px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(150px); opacity: 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.5); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes hud-flicker {
+  0% { opacity: 0.8; }
+  5% { opacity: 0.4; }
+  10% { opacity: 0.8; }
+  100% { opacity: 0.9; }
+}
+
+@keyframes drone-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-5px) rotate(1deg); }
+  75% { transform: translateY(5px) rotate(-1deg); }
+}
+
+.animate-scan {
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: var(--primary);
+  box-shadow: 0 0 15px var(--primary);
+  animation: scan-line 2s linear infinite;
+}
+
+.animate-pulse {
+  position: absolute;
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  animation: pulse-ring 3s ease-out infinite;
+}
+
+.drone-container {
+  animation: drone-float 5s ease-in-out infinite;
+  filter: drop-shadow(0 0 10px var(--primary-glow));
+}
+
 /* Responsive Grid */
 .dashboard-grid {
   display: grid;
