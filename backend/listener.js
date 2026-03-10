@@ -161,7 +161,7 @@ async function checkAndRegister() {
 }
 
 async function start() {
-    console.log("\n🤖 BOT-CALL BACKEND // PLATINUM MVP");
+    console.log("\n[SYSTEM] BOT-CALL BACKEND // PLATINUM MVP");
     console.log("=========================================");
     console.log(`RPC:      ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);

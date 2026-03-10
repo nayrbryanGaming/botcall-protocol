@@ -134,7 +134,8 @@ function App() {
                 reward: result.action === 'scan' ? '0.0001' :
                     result.action === 'move' ? '0.0002' :
                         result.action === 'pick object' ? '0.0003' :
-                            result.action === 'patrol' ? '0.0005' : '0.001',
+                            result.action === 'patrol' ? '0.0005' :
+                                result.action === 'wave' ? '0.0001' : '0.001',
             });
             addTerminalLog("SYS >> Awaiting manual authorization.");
         } catch (error) {
@@ -194,7 +195,10 @@ function App() {
 
             <header>
                 <div className="logo-container">
-                    <span style={{ fontSize: '2.5rem', filter: 'drop-shadow(0 0 10px var(--primary))' }}>🤖</span>
+                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 10px var(--primary))' }}>
+                        <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="5" />
+                        <path d="M50 30V70M30 50H70" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" />
+                    </svg>
                     <div>
                         <h1>BOT-CALL</h1>
                         <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.3em' }}>
@@ -248,6 +252,8 @@ function App() {
                             <RobotActionButton actionName="move" rewardEth="0.0002" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
                             <RobotActionButton actionName="pick object" rewardEth="0.0003" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
                             <RobotActionButton actionName="patrol" rewardEth="0.0005" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="wave" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="recharge" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
                         </div>
                     </div>
 

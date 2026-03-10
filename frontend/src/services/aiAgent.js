@@ -25,7 +25,7 @@ export const interpretAction = async (userPrompt) => {
                 {
                     role: "system",
                     content: `You are the brain of the BOT-CALL robot protocol. 
-                    Interpret the user's intent and map it to an action: 'scan', 'move', 'pick object', 'patrol', or 'recharge'.
+                    Interpret the user's intent and map it to an action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
                     Also provide a one-sentence high-tech reasoning.
                     Return JSON: { "action": "action_name", "reason": "reasoning" }`
                 },
@@ -47,6 +47,7 @@ export const interpretAction = async (userPrompt) => {
         else if (action.includes("pick") || action.includes("get") || action.includes("grab")) action = "pick object";
         else if (action.includes("patrol") || action.includes("guard") || action.includes("secure")) action = "patrol";
         else if (action.includes("charge") || action.includes("battery") || action.includes("power")) action = "recharge";
+        else if (action.includes("wave") || action.includes("hello") || action.includes("greet")) action = "wave";
         else action = "scan"; // Default to safest high-utility action
 
         return {
@@ -65,6 +66,7 @@ export const interpretAction = async (userPrompt) => {
         else if (prompt.includes("pick") || prompt.includes("grab") || prompt.includes("get")) action = "pick object";
         else if (prompt.includes("patrol") || prompt.includes("guard")) action = "patrol";
         else if (prompt.includes("charge") || prompt.includes("power")) action = "recharge";
+        else if (prompt.includes("wave") || prompt.includes("hello")) action = "wave";
 
         return { action, reason };
     }

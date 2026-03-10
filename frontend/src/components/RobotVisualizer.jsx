@@ -39,8 +39,12 @@ const RobotVisualizer = ({ status, action }) => {
             {isExecuting && <animate attributeName="opacity" values="1;0.2;1" dur="0.5s" repeatCount="indefinite" />}
           </circle>
           {/* Arms/Thrusters */}
-          <rect x="15" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2" />
-          <rect x="75" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2" />
+          <rect x="15" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
+            {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 20 55" to="-30 20 55" dur="0.5s" repeatCount="indefinite" />}
+          </rect>
+          <rect x="75" y="45" width="10" height="20" rx="2" stroke="var(--primary)" strokeWidth="2">
+            {isExecuting && action === 'wave' && <animateTransform attributeName="transform" type="rotate" from="0 80 55" to="30 80 55" dur="0.5s" repeatCount="indefinite" />}
+          </rect>
           {/* Antenna */}
           <line x1="50" y1="40" x2="50" y2="25" stroke="var(--primary)" strokeWidth="2" />
           <circle cx="50" cy="25" r="2" fill="var(--primary)" />
@@ -54,6 +58,12 @@ const RobotVisualizer = ({ status, action }) => {
         {isExecuting && (action === 'move' || action === 'patrol') && (
           <div style={{ position: 'absolute', bottom: '-20px', left: '50%', transform: 'translateX(-50%)' }}>
             <div className="animate-pulse" style={{ width: '40px', height: '10px', borderRadius: '50%', top: '0' }}></div>
+          </div>
+        )}
+
+        {isExecuting && action === 'recharge' && (
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }}>
+            <div className="animate-pulse" style={{ width: '100px', height: '100px', border: '1px solid var(--primary)', opacity: 0.5 }}></div>
           </div>
         )}
 

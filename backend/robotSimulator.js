@@ -22,7 +22,7 @@ async function drawProgressBar(durationMs, label) {
 }
 
 async function executeAction(action) {
-    console.log(`\n🤖 [ROBOT] >>> Incoming Command: ${action.toUpperCase()}`);
+    console.log(`\n[ROBOT] >>> Incoming Command: ${action.toUpperCase()}`);
     console.log(`[ROBOT] System Status: NOMINAL | Battery: ${Math.floor(Math.random() * 20) + 80}% | Connection: STABLE`);
     console.log(`[ROBOT] Sensors: [LIDAR: OK] [IMU: OK] [ENCODERS: OK]`);
 
@@ -56,6 +56,12 @@ async function executeAction(action) {
             await sleep(1000);
             await drawProgressBar(6000, "SECURITY PATROL");
             return { battery: Math.floor(Math.random() * 20) + 40, sensors: "OK", log: "Area clear. No anomalies detected." };
+
+        case "wave":
+            console.log("[ROBOT] Activating end-effector greeting subroutines...");
+            await sleep(1000);
+            await drawProgressBar(2000, "EXECUTING GESTURE");
+            return { battery: Math.floor(Math.random() * 10) + 90, sensors: "OK", log: "Greeting protocol completed." };
 
         default:
             console.log(`[ROBOT] WARNING: Command "${action}" not in standard library.`);
