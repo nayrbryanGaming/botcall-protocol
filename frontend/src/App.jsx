@@ -177,52 +177,56 @@ function App() {
 
     return (
         <div className="app-wrapper">
+            <div className="neural-overlay"></div>
+            
             <div className="protocol-status-bar">
                 <div className="status-item">
-                    <span className="status-label">PROTOCOL</span>
-                    <span className="status-value pulse-primary">BOT-CALL v3.0</span>
+                    <span className="status-label">PROTOCOL_SYNC</span>
+                    <span className="status-value pulse-primary">TITAN_v3.3</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">CLUSTER</span>
-                    <span className="status-value">BASE SEPOLIA</span>
+                    <span className="status-label">CLUSTER_LINK</span>
+                    <span className="status-value">BASE_SEPOLIA</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">HEARTBEAT</span>
+                    <span className="status-label">QUANTUM_STATE</span>
                     <div className="heartbeat-pulse"></div>
-                    <span className="status-value" style={{ color: 'var(--success)', marginLeft: '0.2rem' }}>NOMINAL</span>
+                    <span className="status-value" style={{ color: 'var(--success)', marginLeft: '0.2rem' }}>STABLE</span>
                 </div>
             </div>
 
             <header>
                 <div className="logo-container">
-                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 10px var(--primary))' }}>
-                        <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="5" />
-                        <path d="M50 30V70M30 50H70" stroke="var(--primary)" strokeWidth="3" strokeLinecap="round" />
+                    <div className="logo-glow"></div>
+                    <svg width="40" height="40" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 12px var(--primary))' }}>
+                        <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="6" />
+                        <path d="M50 25V75M25 50H75" stroke="var(--primary)" strokeWidth="4" strokeLinecap="round" />
                     </svg>
                     <div>
-                        <h1>BOT-CALL</h1>
-                        <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.3em' }}>
-                            The Agentic Robotics Economy
+                        <h1>TITAN_CORE</h1>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
+                            NEURAL ROBOTICS OVERRIDE
                         </p>
                     </div>
                 </div>
 
                 {!account ? (
-                    <button className="connect-btn" onClick={connectWallet}>Initialize Node</button>
+                    <button className="connect-btn" onClick={connectWallet}>INITIALIZE_NEURAL_LINK</button>
                 ) : (
-                    <div className="account-info glass" style={{ padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.85rem' }}>
-                        <span style={{ color: 'var(--success)', marginRight: '0.5rem', fontWeight: 'bold' }}>ONLINE</span>
-                        {account.slice(0, 6)}...{account.slice(-4)}
+                    <div className="account-info glass">
+                        <span style={{ color: 'var(--success)', marginRight: '0.6rem', fontWeight: 'bold' }}>[ONLINE]</span>
+                        <code>{account.slice(0, 6)}...{account.slice(-4)}</code>
                     </div>
                 )}
             </header>
 
             <main>
-                <section className="hero">
-                    <h2>Hire a Robot <br /> Anywhere.</h2>
-                    <p style={{ fontSize: '1.1rem', color: 'var(--text-dim)', maxWidth: '600px', margin: '1.5rem auto' }}>
-                        A decentralized protocol for real-world automation. 
-                        Pay per action, verify on-chain, and control robots with natural language.
+                <section className="hero glass">
+                    <div className="hero-hud">SYS_AUTH // TITAN_v3.3.0_PLATINUM</div>
+                    <h2>TITAN_COMMAND</h2>
+                    <p style={{ fontSize: '1rem', color: 'var(--text-dim)', maxWidth: '700px', margin: '1rem auto' }}>
+                        Real-time coordination layer for distributed robotic swarms. 
+                        Zero-latency command interpretation via Groq Llama 3 neural interface.
                     </p>
                 </section>
 

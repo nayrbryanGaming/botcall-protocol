@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "framework": "vite",
+  "name": "botcall-frontend",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "cleanUrls": true
+}

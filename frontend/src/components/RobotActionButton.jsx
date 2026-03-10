@@ -32,16 +32,46 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
         }
     };
 
-    const icons = {
-        SCAN: 'TX_SCN_O1',
-        MOVE: 'TR_NAV_O2',
-        PICK_OBJECT: 'GR_ACT_O3',
-        PATROL: 'SQ_SEC_O4',
-        RECHARGE: 'PW_CHA_O5',
-        WAVE: 'GS_WAV_O6'
+    const Icons = {
+        SCAN: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="40" stroke="currentColor" strokeWidth="2" strokeDasharray="5,5" />
+                <path d="M20 50H80" stroke="currentColor" strokeWidth="1" opacity="0.5" />
+                <circle cx="50" cy="50" r="5" fill="currentColor" />
+            </svg>
+        ),
+        MOVE: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <path d="M50 20L80 50L50 80L20 50Z" stroke="currentColor" strokeWidth="2" />
+                <path d="M50 40V60M40 50H60" stroke="currentColor" strokeWidth="2" />
+            </svg>
+        ),
+        PICK_OBJECT: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <path d="M30 70V30H70V70M40 30V20H60V30" stroke="currentColor" strokeWidth="2" />
+                <circle cx="50" cy="50" r="10" stroke="currentColor" strokeWidth="2" />
+            </svg>
+        ),
+        PATROL: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <path d="M20 20L80 20L80 80L20 80Z" stroke="currentColor" strokeWidth="2" strokeDasharray="2,2" />
+                <rect x="40" y="40" width="20" height="20" stroke="currentColor" strokeWidth="2" />
+            </svg>
+        ),
+        RECHARGE: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <path d="M40 20L30 50H50L40 80L70 40H50L60 20Z" fill="currentColor" />
+            </svg>
+        ),
+        WAVE: (
+            <svg width="40" height="40" viewBox="0 0 100 100">
+                <path d="M30 60C30 40 70 40 70 60" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+                <path d="M50 60V80" stroke="currentColor" strokeWidth="2" />
+            </svg>
+        )
     };
 
-    const icon = icons[actionName] || 'RT_SYS_XX';
+    const Icon = Icons[actionName] || Icons.SCAN;
 
     return (
         <div 
@@ -60,9 +90,13 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             <div style={{ 
                 fontSize: '3rem', 
                 marginBottom: '0.5rem',
+                color: 'var(--primary)',
                 filter: loading ? 'drop-shadow(0 0 20px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
-                transition: 'var(--transition)'
-            }}>{icon}</div>
+                transition: 'var(--transition)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center'
+            }}>{Icon}</div>
             
             <h3 style={{ 
                 textTransform: 'uppercase', 
