@@ -29,10 +29,30 @@ const RobotVisualizer = ({ status, action }) => {
       </div>
 
       <div className="drone-container" style={{ position: 'relative' }}>
+        {/* Holographic Grid Background */}
+        <div style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          background: 'linear-gradient(90deg, var(--glass-border) 1px, transparent 1px), linear-gradient(var(--glass-border) 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+          opacity: 0.2,
+          pointerEvents: 'none'
+        }}></div>
+
         {/* Core Robot SVG (Professional Drone/Mech style) */}
         <svg width="120" height="120" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
           {/* Main Body */}
           <path d="M30 40H70L80 50V60L70 70H30L20 60V50L30 40Z" stroke="var(--primary)" strokeWidth="2" fill="rgba(0,242,255,0.05)" />
+          {/* Rotors */}
+          <g>
+            <ellipse cx="20" cy="40" rx="10" ry="2" stroke="var(--primary)" strokeWidth="1">
+                <animate attributeName="ry" values="2;0.5;2" dur="0.1s" repeatCount="indefinite" />
+            </ellipse>
+            <ellipse cx="80" cy="40" rx="10" ry="2" stroke="var(--primary)" strokeWidth="1">
+                <animate attributeName="ry" values="2;0.5;2" dur="0.1s" repeatCount="indefinite" />
+            </ellipse>
+          </g>
           {/* Eye/Sensor */}
           <circle cx="50" cy="50" r="8" stroke="var(--primary)" strokeWidth="2" />
           <circle cx="50" cy="50" r="3" fill={isExecuting ? "var(--error)" : "var(--primary)"} className={isExecuting ? "pulse-sensor" : ""}>

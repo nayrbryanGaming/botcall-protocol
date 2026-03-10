@@ -1,7 +1,9 @@
-# 🤖 BOT-CALL PROTOCOL
-### Decentralized Agentic Robotics & Economic Coordination Layer
+# BOT-CALL PROTOCOL // PLATINUM MVP
+### The Neural Bridge for Decentralized Robotics
 
-**BOT-CALL** is a futuristic protocol that bridges the gap between AI agents and real-world robotic execution. It provides an on-chain Primitive for "Pay-per-action" robotics, allowing any wallet or autonomous agent to hire a robotic unit for physical tasks on the Base network.
+**BOT-CALL** is a state-of-the-art protocol bridging AI agents and real-world physical execution. It provides a robust, on-chain primitive for "Pay-per-action" robotics, enabling autonomous agents and users to hire robotic units for verifiable tasks on the Base network.
+
+**[LIVE DEMO: botcall.vercel.app](https://botcall.vercel.app)**
 
 ---
 
@@ -20,12 +22,13 @@ graph TD
 ```
 
 ## 🛠️ Tech Stack
-- **Blockchain**: Base Sepolia (L2)
-- **Framework**: React + Vite
-- **Smart Contracts**: Solidity + Hardhat + OpenZeppelin
-- **Backend**: Node.js + Ethers.js v6
-- **AI Brain**: Groq SDK (Llama 3 70B)
-- **Deployment**: Vercel (Frontend) + GitHub Actions (CI/CD)
+- **Blockchain**: Base Sepolia (L2) | [Explorer](https://sepolia.basescan.org/address/0xEf395242446652F7057831D5033fE4aB9d6e9C5f)
+- **Framework**: React + Vite (Optimized for Vercel)
+- **Smart Contracts**: Solidity ^0.8.20 (Platinum Edition)
+- **Contract Address**: `0xEf395242446652F7057831D5033fE4aB9d6e9C5f`
+- **Backend**: Node.js Neural Node v3.0
+- **AI Brain**: Groq Llama 3 (Ultra-Low Latency Inference)
+- **CI/CD**: GitHub Actions Automation
 
 ---
 
