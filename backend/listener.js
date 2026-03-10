@@ -90,10 +90,10 @@ async function processQueue() {
         process.stdout.write("[PROTOCOL] Claiming mission... ");
         try {
             await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
-            console.log("SUCCESS ✅");
+            console.log("SUCCESS [OK]");
         } catch (err) {
             if (err.message.includes("Task not pending")) {
-                console.log("ALREADY CLAIMED ⚠️");
+                console.log("ALREADY CLAIMED [ABORT]");
             } else {
                 throw err;
             }
@@ -121,13 +121,13 @@ async function processQueue() {
         // 4. Finalize
         process.stdout.write("[PROTOCOL] Submitting proof of completion... ");
         await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
-        console.log("DONE ✅");
+        console.log("DONE [OK]");
 
-        console.log(`\n✨ [MISSION] MISSION #${task.taskId} ACCOMPLISHED`);
+        console.log(`\n[MISSION] MISSION #${task.taskId} ACCOMPLISHED`);
         processedTasks.add(task.taskId.toString());
 
     } catch (error) {
-        console.log("FAILED ❌");
+        console.log("FAILED [ERR]");
         console.error(`[ERROR] Task #${task.taskId}:`, error.reason || error.message);
     }
 
@@ -161,7 +161,7 @@ async function checkAndRegister() {
 }
 
 async function start() {
-    console.log("\n[SYSTEM] BOT-CALL BACKEND // PLATINUM MVP");
+    console.log("\n[SYSTEM] TITAN-PROTOCOL BACKEND // PLATINUM EDITION");
     console.log("=========================================");
     console.log(`RPC:      ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);

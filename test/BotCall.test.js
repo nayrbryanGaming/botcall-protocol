@@ -1,5 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const { anyValue } = require("@nomicfoundation/hardhat-chai-matchers/withArgs");
 
 describe("BotCall Production Alpha", function () {
     let BotCall;
@@ -27,9 +28,9 @@ describe("BotCall Production Alpha", function () {
 
     it("Should allow a user to request an action", async function () {
         const reward = ethers.parseEther("0.1");
-        await expect(botCall.connect(requester).requestAction("scan", { value: reward }))
+        await expect(botCall.connect(requester).requestAction("SCAN", { value: reward }))
             .to.emit(botCall, "ActionRequested")
-            .withArgs(1, requester.address, "scan", reward);
+            .withArgs(1, requester.address, "SCAN", reward, anyValue);
 
         const task = await botCall.tasks(1);
         expect(task.status).to.equal(0); // Pending
@@ -42,13 +43,13 @@ describe("BotCall Production Alpha", function () {
         // Claim task
         await expect(botCall.connect(robot).startExecuting(1))
             .to.emit(botCall, "ActionExecuting")
-            .withArgs(1, robot.address);
+            .withArgs(1, robot.address, anyValue);
 
         // Complete task
         const initialBalance = await ethers.provider.getBalance(robot.address);
         await expect(botCall.connect(robot).completeAction(1))
             .to.emit(botCall, "ActionCompleted")
-            .withArgs(1, robot.address, reward);
+            .withArgs(1, robot.address, reward, anyValue);
 
         const finalBalance = await ethers.provider.getBalance(robot.address);
         expect(finalBalance).to.be.greaterThan(initialBalance);
@@ -73,7 +74,7 @@ describe("BotCall Production Alpha", function () {
 
         await expect(botCall.connect(requester).cancelTask(1))
             .to.emit(botCall, "ActionCancelled")
-            .withArgs(1);
+            .withArgs(1, anyValue);
 
         const task = await botCall.tasks(1);
         expect(task.status).to.equal(3); // Cancelled

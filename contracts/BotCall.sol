@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 /**
- * @title BotCall Protocol (Platinum MVP)
+ * @title BOT-CALL Protocol (Titan Platinum Edition)
  * @dev On-chain infrastructure for Agentic Robotics Economic Coordination.
  */
 contract BotCall is Ownable, ReentrancyGuard {

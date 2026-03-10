@@ -24,10 +24,10 @@ export const interpretAction = async (userPrompt) => {
             messages: [
                 {
                     role: "system",
-                    content: `You are the brain of the BOT-CALL robot protocol. 
-                    Interpret the user's intent and map it to an action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
-                    Also provide a one-sentence high-tech reasoning.
-                    Return JSON: { "action": "action_name", "reason": "reasoning" }`
+                    content: `You are the TITAN-CORE neural interface for the BOT-CALL protocol. 
+                    Interpret user intent and map to an action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
+                    Provide a one-sentence high-tech reasoning (professional, technical tone, NO EMOJIS).
+                    Return strictly JSON: { "action": "action_name", "reason": "reasoning" }`
                 },
                 {
                     role: "user",

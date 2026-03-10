@@ -1,98 +1,85 @@
-# BOT-CALL PROTOCOL // PLATINUM MVP
-### The Neural Bridge for Decentralized Robotics
+# BOT-CALL // TITAN-PROTOCOL v3.3.0
+## The Agentic Robotics Economic Coordination Protocol
 
-**BOT-CALL** is a state-of-the-art protocol bridging AI agents and real-world physical execution. It provides a robust, on-chain primitive for "Pay-per-action" robotics, enabling autonomous agents and users to hire robotic units for verifiable tasks on the Base network.
-
-**[LIVE DEMO: botcall.vercel.app](https://botcall.vercel.app)**
+**TITAN-CORE** is a decentralized infrastructure built on **Base (L2)** that enables AI Agents and human operators to coordinate real-world robotic actions through trustless smart contracts.
 
 ---
 
-## 🌌 System Architecture
+## 🛠 Project Architecture
 
 ```mermaid
 graph TD
-    User((User / AI Agent)) -->|Authorizes Mission| FE[Frontend UI]
-    FE -->|requestAction + ETH| SC[Smart Contract - Base]
-    SC -->|Emit ActionRequested| BL[Backend Listener]
-    BL -->|Neural Reasoning| AI[Groq Llama 3]
-    BL -->|Execute Command| RS[Robot Simulator]
-    RS -->|Success Signal| BL
-    BL -->|completeAction| SC
-    SC -->|Release Reward| BL
+    User[User / AI Agent] -->|Natural Language| NeuralHub[TITAN Neural Hub]
+    NeuralHub -->|Interpret Intent| Groq[Groq Llama 3]
+    Groq -->|Action Logic| Frontend[React Platinum UI]
+    Frontend -->|requestAction| Contract[BotCall.sol on Base]
+    Contract -->|Event Emission| Listener[Node.js Listener]
+    Listener -->|Execution Signal| Simulator[Robot Simulator]
+    Simulator -->|Success Proof| Listener
+    Listener -->|completeAction| Contract
+    Contract -->|Release Reward| Executor[Robot Node]
 ```
-
-## 🛠️ Tech Stack
-- **Blockchain**: Base Sepolia (L2) | [Explorer](https://sepolia.basescan.org/address/0xEf395242446652F7057831D5033fE4aB9d6e9C5f)
-- **Framework**: React + Vite (Optimized for Vercel)
-- **Smart Contracts**: Solidity ^0.8.20 (Platinum Edition)
-- **Contract Address**: `0xEf395242446652F7057831D5033fE4aB9d6e9C5f`
-- **Backend**: Node.js Neural Node v3.0
-- **AI Brain**: Groq Llama 3 (Ultra-Low Latency Inference)
-- **CI/CD**: GitHub Actions Automation
 
 ---
 
-## 🚀 Installation & Setup
+## 🚀 Key Features
 
-### 1. Prerequisites
-- Node.js v18+
-- MetaMask Wallet
-- Groq API Key
+- **Full Robotic Animation Suite**: High-fidelity, vector-based robot visualizations for all protocol actions (Wave, Scan, Move, Pick).
+- **Neural Interfacing**: Integrated Groq Llama 3 for natural language task planning and environment reasoning.
+- **Titan Platinum UI**: Premium Glassmorphism design system with professional HUD elements and zero-emoji aesthetic.
+- **Autonomous Event Synchronization**: Real-time blockchain polling via optimized Node.js listeners.
+- **Gas Efficient Logic**: Reentrancy-guarded smart contracts optimized for Base L2.
+
+---
+
+## 📦 Installation & Deployment
+
+### Prerequisite
 - Base Sepolia Testnet ETH
+- Groq API Key
+
+### 1. Repository Setup
+```bash
+git clone https://github.com/nayrbryanGaming/botcall-protocol.git
+cd botcall-protocol
+npm install
+```
 
 ### 2. Environment Configuration
-Create a `.env` file in the root directory:
+Create a `.env` file in the root:
 ```env
-PRIVATE_KEY=your_private_key
-BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
-CONTRACT_ADDRESS=your_deployed_contract_address
-GROQ_API_KEY=your_groq_api_key
-
-VITE_CONTRACT_ADDRESS=your_deployed_contract_address
-VITE_GROQ_API_KEY=your_groq_api_key
-VITE_RPC_URL=https://sepolia.base.org
+PRIVATE_KEY="your_private_key"
+CONTRACT_ADDRESS="0x68B257A57283626A3B96541579737f002D5c8b59"
+BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
+GROQ_API_KEY="your_groq_api_key"
 ```
 
-### 3. Deployment
+### 3. Execution
+**Run Backend Node:**
 ```bash
-# Install dependencies
+node backend/listener.js
+```
+
+**Run Frontend:**
+```bash
+cd frontend
 npm install
-
-# Deploy Smart Contract
-npm run deploy:base-sepolia
-
-# Start Backend Robotic Node
-npm run backend
-
-# Start Frontend Terminal
-cd frontend && npm run dev
+npm run dev
 ```
 
 ---
 
-## 🦾 Workflow Guide
-1. **Connect Terminal**: Enter the dashboard and sync your MetaMask wallet to the Base Sepolia network.
-2. **AI Command**: Use the "AI Brain Interface" to send natural language requests like *"Go check the perimeter"* or *"Scan for objects"*.
-3. **Reasoning**: The Llama 3 brain will interpret your intent, decide on the best physical action, and propose a mission.
-4. **Authorize**: Confirm the transaction. Your ETH reward is locked in the contract.
-5. **Execution**: The backend listener detects the request, triggers the simulator, and provides a real-time status feed.
-6. **Finalization**: Once complete, the payment is released to the robotic node automatically.
+## 🛡 Security & Verification
+
+- **Audit Status**: Internal Platinum audit complete.
+- **Contract Address**: `0x68B257A57283626A3B96541579737f002D5c8b59`
+- **Network**: Base Sepolia (Chain ID: 84532)
 
 ---
 
-## 🗺️ Roadmap
-- [ ] **Phase 2**: Integration with physical ROS (Robot Operating System) nodes.
-- [ ] **Phase 3**: Task Verification Oracles (using DePIN nodes for proof-of-work).
-- [ ] **Phase 4**: Robot Marketplace & Reputation System.
-- [ ] **Phase 5**: Multi-chain support for cross-border robotic economy.
+## 🗺 Roadmap
 
----
-
-## 🛡️ Security
-- Non-reentrant reward release.
-- Ownership-protected administrative functions.
-- Resilient backend polling with recovery mechanisms.
-
----
-**Developed for the Future of Agentic Robotics.**  
-*© 2026 BOT-CALL Protocol*
+- [ ] Multi-chain Swarm Coordination
+- [ ] Hardware API Integration (ROS/Husarion)
+- [ ] On-chain Reputation Scoring
+- [ ] Zero-Knowledge Proof for Task Verification

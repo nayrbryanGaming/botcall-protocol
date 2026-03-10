@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
-import RobotActionButton from './components/RobotActionButton';
-import RobotVisualizer from './components/RobotVisualizer';
+import RobotActionButton from './components/RobotActionButton.jsx';
+import RobotVisualizer from './components/RobotVisualizer.jsx';
 import './index.css';
 
 function App() {
@@ -17,9 +17,9 @@ function App() {
 
     const terminalEndRef = useRef(null);
     const [terminal, setTerminal] = useState([
-        "SYSTEM // BOT-CALL PLATINUM MVP READY",
-        "PROTOCOL // v3.0.0 TITAN BRIDGE ACTIVE",
-        "AUTH // INITIALIZING SECURE NODE LINK..."
+        "SYSTEM // TITAN-PROTOCOL v3.3.0 PLATINUM ACTIVE",
+        "AUTH // INITIALIZING SECURE QUANTUM LINK...",
+        "NETWORK // BASE SEPOLIA CLUSTER VALIDATED"
     ]);
 
     const scrollToBottom = () => {
@@ -129,17 +129,17 @@ function App() {
             addTerminalLog(`AI >> Decision: ${result.action.toUpperCase()}`);
 
             setMissionProposal({
-                action: result.action,
+                action: result.action.toUpperCase(),
                 reason: result.reason,
-                reward: result.action === 'scan' ? '0.0001' :
-                    result.action === 'move' ? '0.0002' :
-                        result.action === 'pick object' ? '0.0003' :
-                            result.action === 'patrol' ? '0.0005' :
-                                result.action === 'wave' ? '0.0001' : '0.001',
+                reward: result.action.toLowerCase() === 'scan' ? '0.0001' :
+                    result.action.toLowerCase() === 'move' ? '0.0002' :
+                        result.action.toLowerCase() === 'pick object' ? '0.0003' :
+                            result.action.toLowerCase() === 'patrol' ? '0.0005' :
+                                result.action.toLowerCase() === 'wave' ? '0.0001' : '0.001',
             });
             addTerminalLog("SYS >> Awaiting manual authorization.");
         } catch (error) {
-            addTerminalLog("ERR >> Neural interface timeout.");
+            addTerminalLog("ERR // Neural interface timeout.");
         }
         setIsAiThinking(false);
         setAiPrompt('');
@@ -159,10 +159,10 @@ function App() {
             setMissionProposal(null);
             addTerminalLog(`TX >> Hash: ${tx.hash.slice(0, 16)}...`);
             await tx.wait();
-            addTerminalLog("TX >> Confirmed. Mission is live.");
+            addTerminalLog("TX // Confirmed. Mission is live.");
             loadTasks(contract);
         } catch (error) {
-            addTerminalLog(`TX >> Failed: ${error.reason || "User aborted"}`);
+            addTerminalLog(`TX // Failed: ${error.reason || "User aborted"}`);
         }
     };
 
@@ -248,12 +248,12 @@ function App() {
                         </section>
 
                         <div className="action-grid" style={{ marginTop: '2rem' }}>
-                            <RobotActionButton actionName="scan" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="move" rewardEth="0.0002" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="pick object" rewardEth="0.0003" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="patrol" rewardEth="0.0005" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="wave" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="recharge" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="PICK_OBJECT" rewardEth="0.0003" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="PATROL" rewardEth="0.0005" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="WAVE" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="RECHARGE" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
                         </div>
                     </div>
 

@@ -10,7 +10,7 @@ async function drawProgressBar(durationMs, label) {
         const percent = Math.round((i / steps) * 100);
         const filledWidth = Math.round((i / steps) * width);
         const emptyWidth = width - filledWidth;
-        const bar = "█".repeat(filledWidth) + "░".repeat(emptyWidth);
+        const bar = "#".repeat(filledWidth) + "-".repeat(emptyWidth);
         
         process.stdout.clearLine(0);
         process.stdout.cursorTo(0);
