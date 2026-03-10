@@ -81,7 +81,7 @@ async function processQueue() {
     }
 
     console.log(`\n=========================================`);
-    console.log(`🚀 [MISSION] STARTING MISSION #${task.taskId}`);
+    console.log(`[MISSION] STARTING MISSION #${task.taskId}`);
     console.log(`[ACTION] ${task.action.toUpperCase()}`);
     console.log(`=========================================`);
 
@@ -150,12 +150,12 @@ async function checkAndRegister() {
         if (!info.isRegistered) {
             process.stdout.write("[AUTH] Registering robotic node... ");
             await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_PLATINUM_NODE_V3"]);
-            console.log("REGISTERED ✅");
+            console.log("REGISTERED [OK]");
         } else {
-            console.log(`VALIDATED ✅ | Missions Completed: ${info.tasksCompleted}`);
+            console.log(`VALIDATED [OK] | Missions Completed: ${info.tasksCompleted}`);
         }
     } catch (error) {
-        console.log("AUTH ERROR ❌");
+        console.log("AUTH ERROR [FAIL]");
         console.error(error.message);
     }
 }
@@ -204,7 +204,7 @@ async function start() {
                     continue;
                 }
 
-                console.log(`\n🔔 [EVENT] NEW MISSION DETECTED: #${taskId} [${action.toUpperCase()}]`);
+                console.log(`\n[EVENT] NEW MISSION DETECTED: #${taskId} [${action.toUpperCase()}]`);
                 taskQueue.push({ taskId, action });
                 processQueue();
             }

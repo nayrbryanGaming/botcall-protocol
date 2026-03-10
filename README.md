@@ -5,7 +5,7 @@
 
 ---
 
-## 🛠 Project Architecture
+## Project Architecture
 
 ```mermaid
 graph TD
@@ -22,7 +22,7 @@ graph TD
 
 ---
 
-## 🚀 Key Features
+## Key Features
 
 - **Full Robotic Animation Suite**: High-fidelity, vector-based robot visualizations for all protocol actions (Wave, Scan, Move, Pick).
 - **Neural Interfacing**: Integrated Groq Llama 3 for natural language task planning and environment reasoning.
@@ -32,7 +32,7 @@ graph TD
 
 ---
 
-## 📦 Installation & Deployment
+## Installation & Deployment
 
 ### Prerequisite
 - Base Sepolia Testnet ETH
@@ -69,7 +69,7 @@ npm run dev
 
 ---
 
-## 🛡 Security & Verification
+## Security & Verification
 
 - **Audit Status**: Internal Platinum audit complete.
 - **Contract Address**: `0x68B257A57283626A3B96541579737f002D5c8b59`
@@ -77,7 +77,7 @@ npm run dev
 
 ---
 
-## 🗺 Roadmap
+## Roadmap
 
 - [ ] Multi-chain Swarm Coordination
 - [ ] Hardware API Integration (ROS/Husarion)
