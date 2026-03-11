@@ -122,28 +122,28 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             </p>
             
             <div style={{ 
-                margin: '1.5rem 0', 
-                padding: '0.5rem 1.5rem',
+                margin: '1rem 0', 
+                padding: '0.4rem 1.25rem',
                 background: 'rgba(255,255,255,0.03)',
                 borderRadius: '100px',
                 border: '1px solid var(--glass-border)',
-                fontSize: '1.6rem', 
-                fontWeight: '950', 
+                fontSize: '1.25rem', 
+                fontWeight: '900', 
                 color: 'var(--primary)',
-                textShadow: '0 0 15px var(--primary-glow)',
+                textShadow: '0 0 10px var(--primary-glow)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.4rem'
             }}>
-                {rewardEth} <span style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: '400' }}>ETH</span>
+                {rewardEth} <span style={{ fontSize: '0.65rem', opacity: 0.5, fontWeight: '400' }}>ETH</span>
             </div>
             
             <button
                 className="connect-btn"
                 style={{ 
                     width: '100%', 
-                    fontSize: '0.8rem', 
-                    padding: '1rem',
+                    fontSize: '0.75rem', 
+                    padding: '0.75rem',
                     background: loading ? 'var(--bg-black)' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
                     border: loading ? '1px solid var(--primary)' : 'none',
                     color: loading ? 'var(--primary)' : '#000'

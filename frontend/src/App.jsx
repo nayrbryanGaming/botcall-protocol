@@ -309,7 +309,7 @@ function App() {
                     </div>
 
                     <div className="right-col">
-                        <section className="robot-terminal glass" style={{ height: '300px', marginBottom: '2rem' }}>
+                        <section className="robot-terminal glass" style={{ height: '240px', marginBottom: '1.5rem' }}>
                             <div className="terminal-header">
                                 <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)', fontFamily: 'var(--font-mono)' }}>TELEMETRY_FEED // ACTIVE</span>
                             </div>
@@ -329,12 +329,12 @@ function App() {
                 </div>
 
                 {missionProposal && (
-                    <section className="mission-proposal glass holographic" style={{ marginTop: '3rem', padding: '2.5rem', display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '2rem' }}>
+                    <section className="mission-proposal glass holographic" style={{ marginTop: '2rem', padding: '1.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: '1.5rem' }}>
                         <div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '1rem' }}>PROTOCOL_V3 // MISSION PROPOSAL</h3>
+                                <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '0.85rem' }}>PROTOCOL_V3 // MISSION PROPOSAL</h3>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '1rem', marginBottom: '2rem', fontSize: '0.9rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem', marginBottom: '1.5rem', fontSize: '0.8rem' }}>
                                 <div style={{ color: 'var(--text-dim)' }}>Action:</div>
                                 <div style={{ fontWeight: '800', color: 'var(--primary)' }}>{missionProposal.action.toUpperCase()}</div>
                                 <div style={{ color: 'var(--text-dim)' }}>Analysis:</div>
@@ -354,10 +354,10 @@ function App() {
                     </section>
                 )}
 
-                <section className="task-history" style={{ marginTop: '5rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-                        <h3 style={{ fontSize: '0.8rem', letterSpacing: '0.2rem', color: 'var(--text-dim)' }}>GLOBAL MISSION LEDGER</h3>
-                        <span style={{ fontSize: '0.7rem', color: 'var(--text-dim)' }}>{tasks.length} RECORDS FOUND</span>
+                <section className="task-history" style={{ marginTop: '3rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                        <h3 style={{ fontSize: '0.7rem', letterSpacing: '0.2rem', color: 'var(--text-dim)' }}>GLOBAL MISSION LEDGER</h3>
+                        <span style={{ fontSize: '0.65rem', color: 'var(--text-dim)' }}>{tasks.length} RECORDS FOUND</span>
                     </div>
                     <div className="task-list">
                         {tasks.length === 0 ? (
