@@ -361,7 +361,7 @@ function App() {
                     </div>
                     <div className="task-list">
                         {tasks.length === 0 ? (
-                            <div className="glass" style={{ padding: '3rem', textAlign: 'center', color: 'var(--text-dim)' }}>Connecting to swarm...</div>
+                            <div className="glass" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>Connecting to swarm...</div>
                         ) : (
                             tasks.map((task) => (
                                 <div key={task.id} className="task-card glass">
@@ -385,11 +385,11 @@ function App() {
                 </section>
             </main>
 
-            <footer style={{ marginTop: '6rem', padding: '3rem', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+            <footer style={{ marginTop: '3rem', padding: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
                     DEPLOYED_CONTRACT: <a href={`https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{CONTRACT_ADDRESS}</a>
                 </p>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', letterSpacing: '0.1em', opacity: 0.5 }}>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.55rem', letterSpacing: '0.1em', opacity: 0.5 }}>
                     &copy; 2026 BOT-CALL PROTOCOL // TITAN-CORE NEURAL OVERRIDE // CLUSTER_SEPOLIA_84532
                 </p>
             </footer>
