@@ -243,7 +243,10 @@ function App() {
                             <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>●</span>
                             <code>{account.slice(0, 6)}...{account.slice(-4)}</code>
                             <span style={{ margin: '0 0.75rem', opacity: 0.2 }}>|</span>
-                            <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{parseFloat(balance).toFixed(4)} ETH</span>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span className="heartbeat-pulse" style={{ width: '6px', height: '6px' }}></span>
+                                <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{parseFloat(balance).toFixed(4)} ETH</span>
+                            </span>
                         </div>
                         <button 
                             onClick={disconnectWallet}

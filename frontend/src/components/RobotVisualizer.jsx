@@ -17,7 +17,7 @@ const RobotVisualizer = ({ status, action }) => {
 
   return (
     <div className="robot-visualizer glass platinum-border" style={{ 
-      height: '350px', 
+      height: '260px', 
       position: 'relative', 
       overflow: 'hidden',
       display: 'flex',
@@ -25,8 +25,8 @@ const RobotVisualizer = ({ status, action }) => {
       alignItems: 'center',
       justifyContent: 'center',
       background: 'radial-gradient(circle at center, rgba(0,242,255,0.05) 0%, rgba(0,0,0,0.6) 100%)',
-      borderRadius: '24px',
-      marginBottom: '2rem',
+      borderRadius: '20px',
+      marginBottom: '1rem',
       boxShadow: 'inset 0 0 50px rgba(0,0,0,0.5), 0 10px 30px rgba(0,0,0,0.3)'
     }}>
       {/* HUD Background Decorations */}
@@ -58,7 +58,7 @@ const RobotVisualizer = ({ status, action }) => {
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
             {/* Main Robot SVG */}
-            <svg width="200" height="200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="150" height="150" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
                 <filter id="glow-p">
                   <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
@@ -192,7 +192,7 @@ const RobotVisualizer = ({ status, action }) => {
       </div>
 
       {/* Status Indicators */}
-      <div className="visualizer-footer">
+      <div className="visualizer-footer" style={{ padding: '0.75rem 1.5rem' }}>
         <div className="status-pill-group">
           <div className={`status-pill ${isExecuting ? 'active' : ''}`}>
             {isPending ? "STANDBY" : isExecuting ? "EXECUTING" : "SUCCESS"}

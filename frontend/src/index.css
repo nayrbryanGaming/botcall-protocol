@@ -115,26 +115,26 @@ body::before {
 }
 
 .app-wrapper {
-  max-width: 1200px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 0 1rem 2rem;
+  padding: 0 1rem 1.5rem;
 }
 
 /* Premium Status Bar */
 .protocol-status-bar {
   display: flex;
   justify-content: center;
-  gap: 4rem;
-  padding: 0.75rem;
-  background: rgba(0, 0, 0, 0.85);
+  gap: 2rem;
+  padding: 0.5rem;
+  background: rgba(0, 0, 0, 0.9);
   backdrop-filter: blur(40px);
   border-bottom: 1px solid var(--glass-border);
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.6rem;
   position: sticky;
   top: 0;
   z-index: 1000;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8);
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.8);
   letter-spacing: 0.1em;
 }
 
@@ -160,9 +160,9 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 2rem 0;
+  padding: 1rem 0;
   border-bottom: 1px solid var(--glass-border);
-  margin-bottom: 3rem;
+  margin-bottom: 2rem;
 }
 
 .logo-container {
@@ -172,7 +172,7 @@ header {
 }
 
 .logo-container h1 {
-  font-size: 1.75rem;
+  font-size: 1.4rem;
   font-weight: 950;
   letter-spacing: -0.05em;
   background: linear-gradient(135deg, #fff 30%, var(--primary) 100%);
@@ -215,15 +215,15 @@ header {
 /* Hero Typography */
 .hero {
   text-align: center;
-  margin-bottom: 6rem;
+  margin-bottom: 3rem;
 }
 
 .hero h2 {
-  font-size: clamp(2rem, 6vw, 4rem);
+  font-size: clamp(1.2rem, 4vw, 2.5rem);
   font-weight: 950;
   line-height: 1.1;
   letter-spacing: -0.05em;
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   background: linear-gradient(to bottom, #fff 50%, rgba(255, 255, 255, 0.3) 100%);
   -webkit-background-clip: text;
   background-clip: text;
@@ -341,13 +341,13 @@ header {
 /* Action Cards Grid */
 .action-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 2.5rem;
-  margin-top: 5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  margin-top: 3rem;
 }
 
 .robot-card {
-  padding: 2rem 1.5rem;
+  padding: 1.25rem 1rem;
   text-align: center;
   border: 1px solid var(--glass-border);
 }
@@ -369,14 +369,14 @@ header {
 
 /* Ledger & History */
 .task-history {
-  margin-top: 10rem;
+  margin-top: 5rem;
 }
 
 .task-card {
-  padding: 1.5rem 3rem;
-  margin-bottom: 1rem;
+  padding: 1rem 2rem;
+  margin-bottom: 0.75rem;
   border-left: 3px solid var(--primary);
-  border-radius: 20px;
+  border-radius: 12px;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0.03), transparent);
   display: flex;
   justify-content: space-between;
