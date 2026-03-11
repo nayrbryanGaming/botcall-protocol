@@ -49,7 +49,7 @@ npm install
 Create a `.env` file in the root:
 ```env
 PRIVATE_KEY="your_private_key"
-CONTRACT_ADDRESS="0x68B257A57283626A3B96541579737f002D5c8b59"
+CONTRACT_ADDRESS="0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1"
 BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
 GROQ_API_KEY="your_groq_api_key"
 ```
@@ -72,7 +72,7 @@ npm run dev
 ## Security & Verification
 
 - **Audit Status**: Internal Platinum audit complete.
-- **Contract Address**: `0x68B257A57283626A3B96541579737f002D5c8b59`
+- **Contract Address**: `0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1`
 - **Network**: Base Sepolia (Chain ID: 84532)
 
 ---

@@ -1,8 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap');
 
-/* Platinum Protocol v3.0.0 Design System */
+/* Platinum Protocol v3.3 Premium Design System */
 :root {
   --primary: #00f2ff;
+  --primary-deep: #00a8b3;
   --primary-glow: rgba(0, 242, 255, 0.4);
   --secondary: #7000ff;
   --secondary-glow: rgba(112, 0, 255, 0.3);
@@ -10,15 +11,16 @@
   --success: #00ffaa;
   --warning: #ffb800;
   --error: #ff4d4d;
-  --bg-black: #050505;
-  --card-bg: rgba(20, 20, 20, 0.6);
-  --glass: rgba(255, 255, 255, 0.03);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --bg-black: #030303;
+  --card-bg: rgba(10, 10, 10, 0.7);
+  --glass: rgba(255, 255, 255, 0.025);
+  --glass-border: rgba(255, 255, 255, 0.08);
   --text-main: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.6);
+  --text-dim: rgba(255, 255, 255, 0.5);
   --font-ui: 'Outfit', 'Inter', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition-fast: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * {

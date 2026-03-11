@@ -57,109 +57,127 @@ const RobotVisualizer = ({ status, action }) => {
           } : { y: 0 }}
           transition={{ repeat: Infinity, duration: 3, ease: "easeInOut" }}
         >
-          {/* Main Robot SVG */}
-          <svg width="180" height="180" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <filter id="glow">
-                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
-                <feMerge>
-                  <feMergeNode in="coloredBlur"/>
-                  <feMergeNode in="SourceGraphic"/>
-                </feMerge>
-              </filter>
-              <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="rgba(0,242,255,0.2)" />
-                <stop offset="100%" stopColor="rgba(0,242,255,0.05)" />
-              </linearGradient>
-            </defs>
-
-            {/* Base/Chassis */}
-            <motion.path 
-              d="M30 45H70L85 55V65L70 75H30L15 65V55L30 45Z" 
-              stroke={robotColor} 
-              strokeWidth="2" 
-              fill="url(#bodyGrad)"
-              style={{ filter: 'url(#glow)' }}
-            />
-
-            {/* Rotors / Thrusters */}
-            <g>
-              {/* Front Left */}
-              <motion.ellipse 
-                cx="20" cy="45" rx="12" ry="3" 
+            {/* Main Robot SVG */}
+            <svg width="200" height="200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <filter id="glow-p">
+                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                  <feMerge>
+                    <feMergeNode in="coloredBlur"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <linearGradient id="armorGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="rgba(0,242,255,0.25)" />
+                  <stop offset="50%" stopColor="rgba(0,242,255,0.05)" />
+                  <stop offset="100%" stopColor="rgba(112,0,255,0.2)" />
+                </linearGradient>
+              </defs>
+  
+              {/* Outer Glow Ring */}
+              <circle cx="50" cy="55" r="45" stroke={robotColor} strokeWidth="0.2" opacity="0.2" />
+  
+              {/* Armor Plates */}
+              <motion.path 
+                d="M35 48H65L75 55V62L65 69H35L25 62V55L35 48Z" 
                 stroke={robotColor} 
-                strokeWidth="1"
-                animate={{ ry: [3, 0.5, 3] }}
-                transition={{ repeat: Infinity, duration: 0.1 }}
+                strokeWidth="1.5" 
+                fill="url(#armorGrad)"
+                style={{ filter: 'url(#glow-p)' }}
               />
-              {/* Front Right */}
-              <motion.ellipse 
-                cx="80" cy="45" rx="12" ry="3" 
+  
+              {/* Internal Circuits */}
+              <path d="M40 55H60 M50 50V60" stroke={robotColor} strokeWidth="0.5" opacity="0.5" />
+  
+              {/* Thrusters / Rotors */}
+              <g>
+                {/* FL */}
+                <motion.ellipse 
+                  cx="25" cy="48" rx="14" ry="2" 
+                  stroke={robotColor} 
+                  strokeWidth="0.8"
+                  animate={{ ry: [2, 0.2, 2], opacity: [0.8, 1, 0.8] }}
+                  transition={{ repeat: Infinity, duration: 0.12 }}
+                />
+                {/* FR */}
+                <motion.ellipse 
+                  cx="75" cy="48" rx="14" ry="2" 
+                  stroke={robotColor} 
+                  strokeWidth="0.8"
+                  animate={{ ry: [2, 0.2, 2], opacity: [0.8, 1, 0.8] }}
+                  transition={{ repeat: Infinity, duration: 0.1 }}
+                />
+                {/* BL */}
+                <motion.ellipse 
+                  cx="25" cy="62" rx="10" ry="2" 
+                  stroke={robotColor} 
+                  strokeWidth="0.5"
+                  opacity="0.6"
+                  animate={{ ry: [2, 0.5, 2] }}
+                  transition={{ repeat: Infinity, duration: 0.15 }}
+                />
+                {/* BR */}
+                <motion.ellipse 
+                  cx="75" cy="62" rx="10" ry="2" 
+                  stroke={robotColor} 
+                  strokeWidth="0.5"
+                  opacity="0.6"
+                  animate={{ ry: [2, 0.5, 2] }}
+                  transition={{ repeat: Infinity, duration: 0.13 }}
+                />
+              </g>
+  
+              {/* Neural Optimizer Eye */}
+              <motion.circle 
+                cx="50" cy="58" r="7" 
                 stroke={robotColor} 
-                strokeWidth="1"
-                animate={{ ry: [3, 0.5, 3] }}
-                transition={{ repeat: Infinity, duration: 0.1 }}
+                strokeWidth="1.5" 
               />
-            </g>
-
-            {/* Main Sensor Eye */}
-            <motion.circle 
-              cx="50" cy="55" r="10" 
-              stroke={robotColor} 
-              strokeWidth="2" 
-            />
-            <motion.circle 
-              cx="50" cy="55" r="4" 
-              fill={isExecuting ? "var(--error)" : robotColor}
-              animate={isExecuting ? { opacity: [1, 0.3, 1], scale: [1, 1.2, 1] } : {}}
-              transition={{ repeat: Infinity, duration: 0.8 }}
-            />
-
-            {/* Manipulators / Arms */}
-            <AnimatePresence>
-              {action === 'wave' && isExecuting && (
-                <motion.g
-                  initial={{ rotate: 0 }}
-                  animate={{ rotate: [-20, 20, -20] }}
-                  transition={{ repeat: Infinity, duration: 1 }}
-                  style={{ originX: '20px', originY: '55px' }}
-                >
-                  <rect x="15" y="55" width="6" height="25" rx="3" stroke={robotColor} strokeWidth="2" />
-                </motion.g>
-              )}
-              {action === 'pick object' && isExecuting && (
-                <motion.g
-                  animate={{ y: [0, 5, 0] }}
-                  transition={{ repeat: Infinity, duration: 1.5 }}
-                >
-                  <path d="M40 75L40 85M60 75L60 85" stroke={robotColor} strokeWidth="2" />
-                  <motion.path 
-                    d="M35 85H45 M55 85H65" 
-                    stroke={robotColor} 
-                    strokeWidth="2"
-                    animate={{ x: [-2, 2, -2] }}
-                    transition={{ repeat: Infinity, duration: 0.5 }}
-                  />
-                </motion.g>
-              )}
-            </AnimatePresence>
-
-            {/* Scanning Laser */}
-            {isExecuting && (action === 'scan' || action === 'patrol') && (
-              <motion.line 
-                x1="10" y1="55" x2="90" y2="55" 
-                stroke={action === 'patrol' ? 'var(--error)' : 'var(--primary)'} 
-                strokeWidth="2"
-                animate={{ y1: [45, 75, 45], y2: [45, 75, 45], opacity: [0.2, 0.8, 0.2] }}
-                transition={{ repeat: Infinity, duration: 2 }}
+              <motion.circle 
+                cx="50" cy="58" r="3" 
+                fill={isExecuting ? "var(--error)" : robotColor}
+                animate={isExecuting ? { opacity: [1, 0.2, 1], scale: [1, 1.4, 1] } : {}}
+                transition={{ repeat: Infinity, duration: 0.6 }}
               />
-            )}
-
-            {/* UI Decors inside SVG */}
-            <circle cx="50" cy="55" r="40" stroke={robotColor} strokeWidth="0.5" strokeDasharray="2 4" opacity="0.3">
-               <animateTransform attributeName="transform" type="rotate" from="0 50 55" to="360 50 55" dur="10s" repeatCount="indefinite" />
-            </circle>
-          </svg>
+  
+              {/* Dynamic Action Layers */}
+              <AnimatePresence>
+                {action === 'wave' && isExecuting && (
+                  <motion.g
+                    initial={{ rotate: 0 }}
+                    animate={{ rotate: [-30, 30, -30] }}
+                    transition={{ repeat: Infinity, duration: 0.8, ease: "easeInOut" }}
+                    style={{ originX: '25px', originY: '55px' }}
+                  >
+                    <path d="M25 55L10 40M10 40L15 35M10 40L5 35" stroke={robotColor} strokeWidth="2" strokeLinecap="round" />
+                  </motion.g>
+                )}
+                
+                {action === 'pick object' && isExecuting && (
+                  <motion.g
+                    animate={{ y: [0, 8, 0] }}
+                    transition={{ repeat: Infinity, duration: 1.2 }}
+                  >
+                    <path d="M42 69V78M58 69V78" stroke={robotColor} strokeWidth="1.5" />
+                    <motion.path 
+                      d="M38 78C38 82 46 82 46 78 M54 78C54 82 62 82 62 78" 
+                      stroke={robotColor} 
+                      strokeWidth="1.5"
+                      animate={{ d: ["M38 78C38 80 46 80 46 78", "M38 78C38 85 46 85 46 78"] }}
+                      transition={{ repeat: Infinity, duration: 0.6 }}
+                    />
+                  </motion.g>
+                )}
+              </AnimatePresence>
+  
+              {/* HUD Geometric Elements */}
+              <circle cx="50" cy="58" r="35" stroke={robotColor} strokeWidth="0.3" strokeDasharray="1 5" opacity="0.4">
+                 <animateTransform attributeName="transform" type="rotate" from="0 50 58" to="360 50 58" dur="20s" repeatCount="indefinite" />
+              </circle>
+              <rect x="10" y="55" width="5" height="5" stroke={robotColor} strokeWidth="0.5" opacity="0.3">
+                <animate attributeName="opacity" values="0.3;1;0.3" dur="2s" repeatCount="indefinite" />
+              </rect>
+            </svg>
         </motion.div>
 
         {/* Action Specific HUD Overlays */}

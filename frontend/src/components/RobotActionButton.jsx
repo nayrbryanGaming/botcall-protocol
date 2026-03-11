@@ -88,50 +88,70 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             }}
         >
             <div style={{ 
-                fontSize: '3rem', 
-                marginBottom: '0.5rem',
+                fontSize: '3.5rem', 
+                marginBottom: '1rem',
                 color: 'var(--primary)',
-                filter: loading ? 'drop-shadow(0 0 20px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
+                filter: loading ? 'drop-shadow(0 0 25px var(--primary))' : 'drop-shadow(0 0 15px var(--primary-glow))',
                 transition: 'var(--transition)',
                 display: 'flex',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                transform: loading ? 'scale(1.1) rotate(5deg)' : 'scale(1)'
             }}>{Icon}</div>
             
-            <h3 style={{ 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.15em', 
-                fontWeight: '800', 
-                fontSize: '1.1rem',
-                color: '#fff'
-            }}>{actionName}</h3>
+            <div style={{ textAlign: 'center' }}>
+                <h3 style={{ 
+                    textTransform: 'uppercase', 
+                    letterSpacing: '0.2em', 
+                    fontWeight: '900', 
+                    fontSize: '1.25rem',
+                    color: '#fff',
+                    marginBottom: '0.25rem'
+                }}>{actionName}</h3>
+                <div style={{ height: '2px', width: '30px', background: 'var(--primary)', margin: '0.5rem auto', opacity: 0.6 }}></div>
+            </div>
             
             <p style={{ 
                 color: 'var(--text-dim)', 
-                fontSize: '0.7rem', 
+                fontSize: '0.75rem', 
                 fontFamily: 'var(--font-mono)',
-                lineHeight: '1.4'
+                lineHeight: '1.5',
+                maxWidth: '220px'
             }}>
-                [AUTH_L4] // Execute target procedure on remote cluster.
+                [AUTH_L4] // DISPATCH_KEY_V3 // TARGET_NODE: TITAN-01
             </p>
             
             <div style={{ 
                 margin: '1.5rem 0', 
-                fontSize: '1.4rem', 
-                fontWeight: '900', 
+                padding: '0.5rem 1.5rem',
+                background: 'rgba(255,255,255,0.03)',
+                borderRadius: '100px',
+                border: '1px solid var(--glass-border)',
+                fontSize: '1.6rem', 
+                fontWeight: '950', 
                 color: 'var(--primary)',
-                textShadow: '0 0 10px var(--primary-glow)' 
+                textShadow: '0 0 15px var(--primary-glow)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
             }}>
-                {rewardEth} <span style={{ fontSize: '0.7rem', opacity: 0.6 }}>ETH</span>
+                {rewardEth} <span style={{ fontSize: '0.75rem', opacity: 0.5, fontWeight: '400' }}>ETH</span>
             </div>
             
             <button
                 className="connect-btn"
-                style={{ width: '100%', fontSize: '0.75rem', padding: '0.75rem' }}
+                style={{ 
+                    width: '100%', 
+                    fontSize: '0.8rem', 
+                    padding: '1rem',
+                    background: loading ? 'var(--bg-black)' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                    border: loading ? '1px solid var(--primary)' : 'none',
+                    color: loading ? 'var(--primary)' : '#000'
+                }}
                 disabled={loading || disabled}
                 onClick={(e) => e.stopPropagation()}
             >
-                {loading ? "LINKING..." : `EXECUTE`}
+                {loading ? "ESTABLISHING_LINK..." : `AUTHORIZE_CORE`}
             </button>
         </div>
     );
