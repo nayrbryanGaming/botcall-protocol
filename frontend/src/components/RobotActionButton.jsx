@@ -113,12 +113,12 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             
             <p style={{ 
                 color: 'var(--text-dim)', 
-                fontSize: '0.75rem', 
+                fontSize: '0.65rem', 
                 fontFamily: 'var(--font-mono)',
-                lineHeight: '1.5',
-                maxWidth: '220px'
+                lineHeight: '1.4',
+                maxWidth: '200px'
             }}>
-                [AUTH_L4] // DISPATCH_KEY_V3 // TARGET_NODE: TITAN-01
+                ID: PROTO-X1 // STATUS: READY
             </p>
             
             <div style={{ 
@@ -151,7 +151,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 disabled={loading || disabled}
                 onClick={(e) => e.stopPropagation()}
             >
-                {loading ? "ESTABLISHING_LINK..." : `AUTHORIZE_CORE`}
+                {loading ? "PROCESSING..." : `CONFIRM ACTION`}
             </button>
         </div>
     );

@@ -18,9 +18,9 @@ function App() {
 
     const terminalEndRef = useRef(null);
     const [terminal, setTerminal] = useState([
-        "SYSTEM // TITAN-PROTOCOL v3.3.0 PLATINUM ACTIVE",
-        "AUTH // INITIALIZING SECURE QUANTUM LINK...",
-        "NETWORK // BASE SEPOLIA CLUSTER VALIDATED"
+        "PROTOCOL // SYSTEM INITIALIZED",
+        "AUTH // AWAITING SECURE LINK...",
+        "NETWORK // BASE SEPOLIA CONNECTED"
     ]);
 
     const scrollToBottom = () => {
@@ -207,10 +207,10 @@ function App() {
             <div className="protocol-status-bar">
                 <div className="status-item">
                     <span className="status-label">PROTOCOL_SYNC</span>
-                    <span className="status-value pulse-primary">TITAN_v3.3</span>
+                    <span className="status-value">v3.3.5</span>
                 </div>
                 <div className="status-item">
-                    <span className="status-label">CLUSTER_LINK</span>
+                    <span className="status-label">NETWORK</span>
                     <span className="status-value">BASE_SEPOLIA</span>
                 </div>
                 <div className="status-item">
@@ -228,15 +228,15 @@ function App() {
                         <path d="M50 25V75M25 50H75" stroke="var(--primary)" strokeWidth="4" strokeLinecap="round" />
                     </svg>
                     <div>
-                        <h1>TITAN_CORE</h1>
-                        <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.4em' }}>
-                            NEURAL ROBOTICS OVERRIDE
+                        <h1>BOT-CALL</h1>
+                        <p style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '0.1rem' }}>
+                            ROBOT ACTION NETWORK
                         </p>
                     </div>
                 </div>
 
                 {!account ? (
-                    <button className="connect-btn" onClick={connectWallet} style={{ fontSize: '0.75rem', padding: '0.6rem 1.25rem' }}>INITIALIZE_LINK</button>
+                    <button className="connect-btn" onClick={connectWallet} style={{ fontSize: '0.7rem', padding: '0.5rem 1rem' }}>CONNECT WALLET</button>
                 ) : (
                     <div className="account-info-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div className="account-info glass" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
@@ -269,11 +269,10 @@ function App() {
 
             <main>
                 <section className="hero glass">
-                    <div className="hero-hud">SYS_AUTH // TITAN_v3.3.0_PLATINUM</div>
-                    <h2>TITAN_COMMAND</h2>
-                    <p style={{ fontSize: '1rem', color: 'var(--text-dim)', maxWidth: '700px', margin: '1rem auto' }}>
-                        Real-time coordination layer for distributed robotic swarms. 
-                        Zero-latency command interpretation via Groq Llama 3 neural interface.
+                    <h2>BOT-CALL INTERFACE</h2>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: '600px', margin: '0.75rem auto' }}>
+                        Enterprise-grade protocol for pay-per-action robotic operations.
+                        Secure, verifiable blockchain-based task execution layer.
                     </p>
                 </section>
 
@@ -331,8 +330,8 @@ function App() {
                 {missionProposal && (
                     <section className="mission-proposal glass holographic" style={{ marginTop: '2rem', padding: '1.5rem', display: 'grid', gridTemplateColumns: 'minmax(0, 1.5fr) minmax(0, 1fr)', gap: '1.5rem' }}>
                         <div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                                <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '0.85rem' }}>PROTOCOL_V3 // MISSION PROPOSAL</h3>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                                <h3 style={{ color: 'var(--primary)', letterSpacing: '0.1em', fontSize: '0.8rem' }}>MISSION PROPOSAL</h3>
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.75rem', marginBottom: '1.5rem', fontSize: '0.8rem' }}>
                                 <div style={{ color: 'var(--text-dim)' }}>Action:</div>
@@ -343,12 +342,12 @@ function App() {
                                 <div style={{ fontWeight: '800', color: 'var(--primary)' }}>{missionProposal.reward} ETH</div>
                             </div>
                             <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button className="connect-btn" onClick={executeMission} style={{ flex: 1 }}>Authorize Protocol</button>
-                                <button className="connect-btn" onClick={() => setMissionProposal(null)} style={{ flex: 0.5, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}>Abort</button>
+                                <button className="connect-btn" onClick={executeMission} style={{ flex: 1 }}>AUTHORIZE ACTION</button>
+                                <button className="connect-btn" onClick={() => setMissionProposal(null)} style={{ flex: 0.5, background: 'rgba(255,255,255,0.05)', border: '1px solid var(--glass-border)' }}>CANCEL</button>
                             </div>
                         </div>
-                        <div className="preview-container" style={{ borderLeft: '1px solid var(--glass-border)', paddingLeft: '2rem' }}>
-                            <div style={{ fontSize: '0.65rem', color: 'var(--text-dim)', marginBottom: '1rem', textAlign: 'center' }}>PREVIEW // SIMULATION_NODE</div>
+                        <div className="preview-container" style={{ borderLeft: '1px solid var(--glass-border)', paddingLeft: '1.5rem' }}>
+                            <div style={{ fontSize: '0.6rem', color: 'var(--text-dim)', marginBottom: '0.75rem', textAlign: 'center' }}>PREVIEW</div>
                             <RobotVisualizer status={1} action={missionProposal.action} />
                         </div>
                     </section>
@@ -361,7 +360,7 @@ function App() {
                     </div>
                     <div className="task-list">
                         {tasks.length === 0 ? (
-                            <div className="glass" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>Connecting to swarm...</div>
+                            <div className="glass" style={{ padding: '1rem', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.75rem' }}>Synchronizing with blockchain...</div>
                         ) : (
                             tasks.map((task) => (
                                 <div key={task.id} className="task-card glass">
@@ -390,7 +389,7 @@ function App() {
                     DEPLOYED_CONTRACT: <a href={`https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{CONTRACT_ADDRESS}</a>
                 </p>
                 <p style={{ color: 'var(--text-dim)', fontSize: '0.55rem', letterSpacing: '0.1em', opacity: 0.5 }}>
-                    &copy; 2026 BOT-CALL PROTOCOL // TITAN-CORE NEURAL OVERRIDE // CLUSTER_SEPOLIA_84532
+                    &copy; 2026 BOT-CALL // ENTERPRISE ROBOTICS PROTOCOL // BASE_SEPOLIA_84532
                 </p>
             </footer>
         </div>
