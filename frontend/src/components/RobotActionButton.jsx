@@ -79,19 +79,19 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             onClick={!loading && !disabled ? handleRequest : undefined} 
             style={{ 
                 cursor: loading || disabled ? 'not-allowed' : 'pointer',
-                padding: '2.5rem 1.5rem',
+                padding: '1.5rem 1rem',
                 textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '1rem'
+                gap: '0.75rem'
             }}
         >
             <div style={{ 
-                fontSize: '3.5rem', 
-                marginBottom: '1rem',
+                fontSize: '2rem', 
+                marginBottom: '0.5rem',
                 color: 'var(--primary)',
-                filter: loading ? 'drop-shadow(0 0 25px var(--primary))' : 'drop-shadow(0 0 15px var(--primary-glow))',
+                filter: loading ? 'drop-shadow(0 0 15px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
                 transition: 'var(--transition)',
                 display: 'flex',
                 justifyContent: 'center',

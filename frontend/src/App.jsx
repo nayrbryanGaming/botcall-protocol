@@ -10,6 +10,7 @@ function App() {
     const [account, setAccount] = useState(null);
     const [provider, setProvider] = useState(null);
     const [contract, setContract] = useState(null);
+    const [balance, setBalance] = useState("0");
     const [tasks, setTasks] = useState([]);
     const [aiPrompt, setAiPrompt] = useState("");
     const [isAiThinking, setIsAiThinking] = useState(false);
@@ -109,11 +110,35 @@ function App() {
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             setContract(c);
             loadTasks(c);
+            
+            // Initial balance fetch
+            const bal = await p.getBalance(accounts[0]);
+            setBalance(ethers.formatEther(bal));
+
             addTerminalLog(`CONNECTED // Node ${accounts[0].slice(0, 8)} authorized.`);
         } catch (error) {
             addTerminalLog(`ERR // Auth sequence rejected.`);
         }
     };
+
+    const disconnectWallet = () => {
+        setAccount(null);
+        setProvider(null);
+        setContract(null);
+        setBalance("0");
+        addTerminalLog("AUTH // Neural link severed.");
+    };
+
+    // Auto-update balance
+    useEffect(() => {
+        if (provider && account) {
+            const interval = setInterval(async () => {
+                const bal = await provider.getBalance(account);
+                setBalance(ethers.formatEther(bal));
+            }, 10000);
+            return () => clearInterval(interval);
+        }
+    }, [provider, account]);
 
     const handleAiCommand = async (e) => {
         e.preventDefault();
@@ -211,11 +236,30 @@ function App() {
                 </div>
 
                 {!account ? (
-                    <button className="connect-btn" onClick={connectWallet}>INITIALIZE_NEURAL_LINK</button>
+                    <button className="connect-btn" onClick={connectWallet} style={{ fontSize: '0.75rem', padding: '0.6rem 1.25rem' }}>INITIALIZE_LINK</button>
                 ) : (
-                    <div className="account-info glass">
-                        <span style={{ color: 'var(--success)', marginRight: '0.6rem', fontWeight: 'bold' }}>[ONLINE]</span>
-                        <code>{account.slice(0, 6)}...{account.slice(-4)}</code>
+                    <div className="account-info-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div className="account-info glass" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                            <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>●</span>
+                            <code>{account.slice(0, 6)}...{account.slice(-4)}</code>
+                            <span style={{ margin: '0 0.75rem', opacity: 0.2 }}>|</span>
+                            <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{parseFloat(balance).toFixed(4)} ETH</span>
+                        </div>
+                        <button 
+                            onClick={disconnectWallet}
+                            style={{ 
+                                background: 'transparent', 
+                                border: '1px solid var(--error)', 
+                                color: 'var(--error)', 
+                                padding: '0.4rem 0.8rem', 
+                                borderRadius: '8px',
+                                fontSize: '0.65rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            DISCONNECT
+                        </button>
                     </div>
                 )}
             </header>
@@ -339,8 +383,11 @@ function App() {
             </main>
 
             <footer style={{ marginTop: '6rem', padding: '3rem', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
-                <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', letterSpacing: '0.1em' }}>
-                    &copy; 2026 BOT-CALL PROTOCOL // BUILT FOR THE AGENTIC ROBOTICS ECONOMY
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', letterSpacing: '0.1em', marginBottom: '1rem' }}>
+                    DEPLOYED_CONTRACT: <a href={`https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{CONTRACT_ADDRESS}</a>
+                </p>
+                <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', letterSpacing: '0.1em', opacity: 0.5 }}>
+                    &copy; 2026 BOT-CALL PROTOCOL // TITAN-CORE NEURAL OVERRIDE // CLUSTER_SEPOLIA_84532
                 </p>
             </footer>
         </div>
