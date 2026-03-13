@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_jOEoULyUNv3ZO6LxkHUKE1gf9trl",
+  "orgId": "team_6SkUC46GbnKXPHFbnns0dxaL",
+  "projectName": "botcall-protocol",
+  "settings": {
+    "createdAt": 1773207218927,
+    "framework": "vite",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": null,
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

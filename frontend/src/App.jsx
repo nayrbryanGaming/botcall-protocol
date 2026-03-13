@@ -23,13 +23,13 @@ function App() {
         "NETWORK // BASE SEPOLIA CONNECTED"
     ]);
 
-    const scrollToBottom = () => {
-        terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    };
+    // const scrollToBottom = () => {
+    //     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    // };
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [terminal]);
+    // useEffect(() => {
+    //     scrollToBottom();
+    // }, [terminal]);
 
     useEffect(() => {
         const checkConnection = async () => {
