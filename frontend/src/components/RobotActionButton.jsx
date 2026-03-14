@@ -6,7 +6,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
     const [loading, setLoading] = useState(false);
 
     const handleRequest = async () => {
-        if (!window.ethereum) return alert("Neural Link required: Please install MetaMask.");
+        if (!window.ethereum) return alert("Neural Link required: Please install a secure Web3 wallet provider (e.g. Rabby, Coinbase, etc.) to interface with the protocol.");
 
         setLoading(true);
         try {
@@ -76,22 +76,22 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
     return (
         <div 
             className={`robot-card glass ${loading ? 'holographic' : ''}`} 
-            onClick={!loading && !disabled ? handleRequest : undefined} 
             style={{ 
-                cursor: loading || disabled ? 'not-allowed' : 'pointer',
                 padding: '1.5rem 1rem',
                 textAlign: 'center',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '0.75rem'
+                gap: '0.75rem',
+                border: loading ? '1px solid var(--primary)' : '1px solid var(--glass-border)',
+                transition: 'var(--transition)'
             }}
         >
             <div style={{ 
-                fontSize: '2rem', 
+                fontSize: '2.5rem', 
                 marginBottom: '0.5rem',
                 color: 'var(--primary)',
-                filter: loading ? 'drop-shadow(0 0 15px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
+                filter: loading ? 'drop-shadow(0 0 20px var(--primary))' : 'drop-shadow(0 0 10px var(--primary-glow))',
                 transition: 'var(--transition)',
                 display: 'flex',
                 justifyContent: 'center',
@@ -102,56 +102,59 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
             <div style={{ textAlign: 'center' }}>
                 <h3 style={{ 
                     textTransform: 'uppercase', 
-                    letterSpacing: '0.2em', 
+                    letterSpacing: '0.25em', 
                     fontWeight: '900', 
-                    fontSize: '1.25rem',
+                    fontSize: '1.4rem',
                     color: '#fff',
                     marginBottom: '0.25rem'
                 }}>{actionName}</h3>
-                <div style={{ height: '2px', width: '30px', background: 'var(--primary)', margin: '0.5rem auto', opacity: 0.6 }}></div>
+                <div style={{ height: '3px', width: '40px', background: 'var(--primary)', margin: '0.5rem auto', opacity: 0.8 }}></div>
             </div>
             
             <p style={{ 
                 color: 'var(--text-dim)', 
-                fontSize: '0.65rem', 
+                fontSize: '0.7rem', 
                 fontFamily: 'var(--font-mono)',
                 lineHeight: '1.4',
-                maxWidth: '200px'
+                maxWidth: '220px',
+                letterSpacing: '0.05em'
             }}>
-                ID: PROTO-X1 // STATUS: READY
+                ID: PROTO-PLATINUM // STATUS: MULTI-WALLET READY
             </p>
             
             <div style={{ 
-                margin: '1rem 0', 
-                padding: '0.4rem 1.25rem',
-                background: 'rgba(255,255,255,0.03)',
+                margin: '1.25rem 0', 
+                padding: '0.5rem 1.5rem',
+                background: 'rgba(0, 242, 255, 0.05)',
                 borderRadius: '100px',
-                border: '1px solid var(--glass-border)',
-                fontSize: '1.25rem', 
+                border: '1px solid rgba(0, 242, 255, 0.2)',
+                fontSize: '1.5rem', 
                 fontWeight: '900', 
                 color: 'var(--primary)',
-                textShadow: '0 0 10px var(--primary-glow)',
+                textShadow: '0 0 15px var(--primary-glow)',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.4rem'
+                gap: '0.5rem'
             }}>
-                {rewardEth} <span style={{ fontSize: '0.65rem', opacity: 0.5, fontWeight: '400' }}>ETH</span>
+                {rewardEth} <span style={{ fontSize: '0.8rem', opacity: 0.7, fontWeight: '600' }}>ETH</span>
             </div>
             
             <button
                 className="connect-btn"
                 style={{ 
                     width: '100%', 
-                    fontSize: '0.75rem', 
-                    padding: '0.75rem',
-                    background: loading ? 'var(--bg-black)' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
-                    border: loading ? '1px solid var(--primary)' : 'none',
-                    color: loading ? 'var(--primary)' : '#000'
+                    fontSize: '0.85rem', 
+                    padding: '1rem',
+                    background: loading ? 'transparent' : 'linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%)',
+                    border: loading ? '2px solid var(--primary)' : '1px solid rgba(255,255,255,0.4)',
+                    color: loading ? 'var(--primary)' : '#000',
+                    boxShadow: loading ? 'none' : '0 10px 20px rgba(0, 242, 255, 0.2)',
+                    cursor: loading || disabled ? 'not-allowed' : 'pointer'
                 }}
                 disabled={loading || disabled}
-                onClick={(e) => e.stopPropagation()}
+                onClick={handleRequest}
             >
-                {loading ? "PROCESSING..." : `CONFIRM ACTION`}
+                {loading ? "DATA_LINK_ESTABLISHING..." : `EXECUTE ${actionName}`}
             </button>
         </div>
     );

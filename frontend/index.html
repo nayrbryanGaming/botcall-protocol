@@ -2,9 +2,21 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      // EMERGENCY PROTOCOL: KILL ALL SCROLLING ON LOAD
+      (function() {
+        window.scrollTo(0, 0);
+        if ('scrollRestoration' in window.history) {
+          window.history.scrollRestoration = 'manual';
+        }
+        window.addEventListener('load', function() {
+          setTimeout(function() { window.scrollTo(0, 0); }, 1);
+        });
+      })();
+    </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BOT-CALL | Pay-per-action Robotics</title>
+    <title>BOT-CALL | PLATINUM v4.2</title>
   </head>
   <body>
     <div id="root"></div>

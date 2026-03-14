@@ -1,33 +1,38 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;600;800&display=swap');
 
-/* Platinum Protocol v3.3 Premium Design System */
+/* Platinum Protocol v4.0 Ultra-Premium Design System */
 :root {
   --primary: #00f2ff;
-  --primary-deep: #00a8b3;
-  --primary-glow: rgba(0, 242, 255, 0.4);
-  --secondary: #7000ff;
-  --secondary-glow: rgba(112, 0, 255, 0.3);
+  --primary-deep: #008c96;
+  --primary-glow: rgba(0, 242, 255, 0.5);
+  --secondary: #a000ff;
+  --secondary-glow: rgba(160, 0, 255, 0.4);
   --accent: #ff007a;
   --success: #00ffaa;
   --warning: #ffb800;
   --error: #ff4d4d;
-  --bg-black: #030303;
-  --card-bg: rgba(10, 10, 10, 0.7);
-  --glass: rgba(255, 255, 255, 0.025);
-  --glass-border: rgba(255, 255, 255, 0.08);
+  --bg-black: #050505;
+  --card-bg: rgba(15, 15, 15, 0.8);
+  --glass: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.12);
   --text-main: #ffffff;
-  --text-dim: rgba(255, 255, 255, 0.5);
-  --font-ui: 'Outfit', 'Inter', sans-serif;
+  --text-dim: rgba(255, 255, 255, 0.6);
+  --font-ui: 'Inter', 'Outfit', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
-  --transition-fast: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-fast: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  --br-lg: 28px;
+  --br-md: 16px;
 }
 
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
-  cursor: default;
+}
+
+*::selection {
+  background: var(--primary);
+  color: #000;
 }
 
 /* Custom Futuristic Scrollbar */

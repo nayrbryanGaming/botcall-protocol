@@ -16,20 +16,25 @@ function App() {
     const [isAiThinking, setIsAiThinking] = useState(false);
     const [missionProposal, setMissionProposal] = useState(null);
 
-    const terminalEndRef = useRef(null);
     const [terminal, setTerminal] = useState([
         "PROTOCOL // SYSTEM INITIALIZED",
         "AUTH // AWAITING SECURE LINK...",
         "NETWORK // BASE SEPOLIA CONNECTED"
     ]);
 
-    // const scrollToBottom = () => {
-    //     terminalEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    // };
+    // Autoscroll logic removed per user request
+    useEffect(() => {
+        window.scrollTo(0, 0);
+        if ('scrollRestoration' in window.history) {
+            window.history.scrollRestoration = 'manual';
+        }
+    }, []);
 
-    // useEffect(() => {
-    //     scrollToBottom();
-    // }, [terminal]);
+    useEffect(() => {
+        if (account) {
+            window.scrollTo({ top: 0, behavior: 'instant' });
+        }
+    }, [account]);
 
     useEffect(() => {
         const checkConnection = async () => {
@@ -84,7 +89,7 @@ function App() {
     }, [contract, tasks.length]);
 
     const connectWallet = async () => {
-        if (!window.ethereum) return addTerminalLog("ERR // Neural link (MetaMask) not found.");
+        if (!window.ethereum) return addTerminalLog("ERR // Secure Neural Link not detected.");
         try {
             const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             setAccount(accounts[0]);
@@ -230,7 +235,7 @@ function App() {
                     <div>
                         <h1>BOT-CALL</h1>
                         <p style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '0.1rem' }}>
-                            ROBOT ACTION NETWORK
+                            ROBOT ACTION NETWORK // MULTI-WALLET ENABLED
                         </p>
                     </div>
                 </div>
@@ -268,12 +273,15 @@ function App() {
             </header>
 
             <main>
-                <section className="hero glass">
-                    <h2>BOT-CALL INTERFACE</h2>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-dim)', maxWidth: '600px', margin: '0.75rem auto' }}>
-                        Enterprise-grade protocol for pay-per-action robotic operations.
-                        Secure, verifiable blockchain-based task execution layer.
-                    </p>
+                <section className="hero">
+                    <div className="hero-content">
+                        <h2>BOT-CALL INTERFACE // PLATINUM v4</h2>
+                        <div className="status-badge status-1 pulse-primary" style={{ display: 'inline-block', marginBottom: '1rem', padding: '0.25rem 1rem' }}>SYSTEM_OPTIMIZED</div>
+                        <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', maxWidth: '700px', margin: '0 auto' }}>
+                            Advanced neural link for pay-per-action robotic operations. 
+                            Verifiable blockchain-based task execution with sub-second latency targets.
+                        </p>
+                    </div>
                 </section>
 
                 <div className="dashboard-grid">
@@ -316,7 +324,6 @@ function App() {
                                 {terminal.map((log, i) => (
                                     <div key={i} style={{ marginBottom: '0.4rem', opacity: 0.8 }}>{log}</div>
                                 ))}
-                                <div ref={terminalEndRef} />
                             </div>
                         </section>
 
