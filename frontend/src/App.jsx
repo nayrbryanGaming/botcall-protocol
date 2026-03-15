@@ -44,12 +44,14 @@ function App() {
     const [missionProposal, setMissionProposal] = useState(null);
     const [providers, setProviders] = useState([]);
     const [showWalletModal, setShowWalletModal] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     
     // Stable Refs for logic (prevents loops)
     const providerRef = useRef(null);
     const contractRef = useRef(null);
     const isConnecting = useRef(false);
     const lastChainId = useRef(null);
+    const initializedRef = useRef(false);
 
     const [terminal, setTerminal] = useState([
         "PROTOCOL // SYSTEM INITIALIZED",
@@ -90,19 +92,28 @@ function App() {
             const accounts = await window.ethereum.request({ method: 'eth_accounts' });
             if (accounts.length > 0) {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-                // Only sync if ALREADY on Base Sepolia (84532)
                 if (chainId === '0x14a34') {
-                    setAccount(accounts[0]);
+                    const addr = accounts[0];
+                    if (addr !== account) setAccount(addr);
+                    
                     providerRef.current = new ethers.BrowserProvider(window.ethereum);
                     const signer = await providerRef.current.getSigner();
                     contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-                    const bal = await providerRef.current.getBalance(accounts[0]);
+                    
+                    const bal = await providerRef.current.getBalance(addr);
                     setBalance(ethers.formatEther(bal));
                     loadTasks();
                 }
             }
         } catch (e) {
             console.error("Sync failed", e);
+        } finally {
+            if (!initializedRef.current) {
+                setTimeout(() => {
+                    setIsInitialized(true);
+                    initializedRef.current = true;
+                }, 1500);
+            }
         }
     };
 
@@ -124,17 +135,28 @@ function App() {
         }
     };
 
+    // Initial mount sync only
     useEffect(() => {
         syncSession();
-        const interval = setInterval(() => {
-            if (account) {
-                loadTasks();
-                if (providerRef.current) {
-                    providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
-                }
+        // Fallback initialized if sync is slow or no wallet
+        const timer = setTimeout(() => {
+            if (!initializedRef.current) {
+                setIsInitialized(true);
+                initializedRef.current = true;
             }
-        }, 8000);
-        return () => clearInterval(interval);
+        }, 3000);
+        
+        const hb = setInterval(() => {
+            if (account && providerRef.current) {
+                loadTasks();
+                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
+            }
+        }, 10000);
+        
+        return () => {
+            clearTimeout(timer);
+            clearInterval(hb);
+        };
     }, [account]);
 
     useEffect(() => {
@@ -145,7 +167,7 @@ function App() {
                 setAccount(null);
                 providerRef.current = null;
                 contractRef.current = null;
-            } else if (accs[0] !== account) {
+            } else {
                 syncSession();
             }
         };
@@ -284,6 +306,18 @@ function App() {
         if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
         return new Date(ts * 1000).toLocaleTimeString();
     };
+
+    if (!isInitialized) {
+        return (
+            <div className="app-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--bg-black)' }}>
+                <div style={{ textAlign: 'center' }}>
+                    <div className="logo-glow" style={{ width: '100px', height: '100px', margin: '0 auto 2rem' }}></div>
+                    <h2 style={{ color: 'var(--primary)', letterSpacing: '0.2rem', fontSize: '1rem', animation: 'pulse-border 2s infinite' }}>SYNCING_NEURAL_LINK...</h2>
+                    <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', marginTop: '1rem' }}>ESTABLISHING SECURE PROTOCOL // PLATINUM v4.8.9</p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="app-wrapper">
