@@ -87,14 +87,17 @@ function App() {
     }, []);
 
     const syncSession = async () => {
-        if (!window.ethereum || isConnecting.current) return;
+        if (!window.ethereum || isConnecting.current) {
+            setIsInitialized(true);
+            return;
+        }
         try {
             const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accounts.length > 0) {
+            if (accounts && accounts.length > 0) {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' });
                 if (chainId === '0x14a34') {
                     const addr = accounts[0];
-                    if (addr !== account) setAccount(addr);
+                    setAccount(addr);
                     
                     providerRef.current = new ethers.BrowserProvider(window.ethereum);
                     const signer = await providerRef.current.getSigner();
@@ -108,12 +111,9 @@ function App() {
         } catch (e) {
             console.error("Sync failed", e);
         } finally {
-            if (!initializedRef.current) {
-                setTimeout(() => {
-                    setIsInitialized(true);
-                    initializedRef.current = true;
-                }, 1500);
-            }
+            // GUARANTEED INITIALIZATION
+            setIsInitialized(true);
+            initializedRef.current = true;
         }
     };
 
@@ -137,18 +137,29 @@ function App() {
 
     // Initial mount sync only - THIS KILLS THE REFRESH LOOP
     useEffect(() => {
-        // Run sync exactly once.
+        // NUCLEAR FAILSAFE: Force show UI after 3 seconds no matter what
+        const emergencyTimer = setTimeout(() => {
+            if (!initializedRef.current) {
+                setIsInitialized(true);
+                initializedRef.current = true;
+                addTerminalLog("SYS // Failsafe initialization triggered.");
+            }
+        }, 3000);
+
         syncSession();
         
         const hb = setInterval(() => {
             if (account && providerRef.current) {
                 loadTasks();
-                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
+                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b))).catch(() => {});
             }
-        }, 12000);
+        }, 15000);
         
-        return () => clearInterval(hb);
-    }, []); // ABSOLUTELY EMPTY ARRAY. No re-triggers ever.
+        return () => {
+            clearTimeout(emergencyTimer);
+            clearInterval(hb);
+        };
+    }, []); // ABSOLUTELY EMPTY ARRAY.
 
     useEffect(() => {
         if (!window.ethereum) return;

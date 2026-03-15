@@ -3,39 +3,43 @@
   <head>
     <meta charset="UTF-8" />
     <style>
-      /* Failsafe UI Styling */
+      /* Failsafe UI Styling - IMPOSSIBLE TO MISS */
       #failsafe-ui {
         display: none;
         position: fixed;
         top: 0; left: 0; width: 100%; height: 100%;
-        background: #050505;
-        color: #00f2ff;
+        background: radial-gradient(circle, #101010 0%, #000 100%);
+        color: #ff0055;
         font-family: 'Inter', sans-serif;
-        z-index: 9999;
+        z-index: 10000;
         flex-direction: column;
         align-items: center;
         justify-content: center;
         text-align: center;
-        padding: 20px;
+        padding: 40px;
+        border: 20px solid #ff0055;
       }
       .reset-btn {
-        background: linear-gradient(135deg, #00f2ff 0%, #a000ff 100%);
+        background: #ff0055;
+        box-shadow: 0 0 30px #ff0055;
         border: none;
-        color: #000;
-        padding: 15px 30px;
-        border-radius: 8px;
+        color: #fff;
+        padding: 20px 40px;
+        border-radius: 4px;
+        font-size: 1.5rem;
         font-weight: 900;
         cursor: pointer;
-        margin-top: 20px;
+        margin-top: 30px;
         text-transform: uppercase;
-        letter-spacing: 2px;
+        letter-spacing: 5px;
+        transition: all 0.2s;
       }
+      .reset-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
     </style>
     <script>
       // GLOBAL ERROR BOUNDARY PROTOCOL
       window.onerror = function(msg, url, line) {
-        console.error("GLOBAL_CRASH:", msg, url, line);
-        showFailsafe("RUNTIME_INTERFACE_ERROR: " + msg);
+        showFailsafe("FATAL_BOOT_ERROR: " + msg);
         return false;
       };
 
@@ -43,12 +47,12 @@
         const ui = document.getElementById('failsafe-ui');
         if (ui) {
           ui.style.display = 'flex';
-          document.getElementById('fail-reason').innerText = reason;
+          const rEl = document.getElementById('fail-reason');
+          if (rEl) rEl.innerText = reason;
         }
       }
 
       function hardReset() {
-        // Clear all caches and reload
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(regs => {
             for(let reg of regs) reg.unregister();
@@ -57,34 +61,37 @@
         window.location.reload(true);
       }
 
-      // Detect "Static Black Screen" (Root empty for > 5s)
+      // Detect "Static Black Screen" (Root empty for > 4s)
       window.addEventListener('load', function() {
         setTimeout(function() {
           const root = document.getElementById('root');
           if (root && root.innerHTML === "") {
-            showFailsafe("NODE_SYNC_TIMEOUT: Interface failed to mount.");
+            showFailsafe("NODE_SYNC_TIMEOUT: Website failed to mount. Stale cache detected.");
           }
-        }, 5000);
+        }, 4000);
       });
     </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BOT-CALL | PLATINUM v4.8.9</title>
+    <title>BOT-CALL | PLATINUM v4.9.9</title>
   </head>
   <body>
     <div id="root"></div>
     
     <!-- Failsafe Error UI -->
     <div id="failsafe-ui">
-      <div style="font-size: 3rem; margin-bottom: 20px;">⚠️</div>
-      <h2 style="letter-spacing: 5px;">SYSTEM_HALTED</h2>
-      <p id="fail-reason" style="opacity: 0.6; margin: 10px 0; font-family: monospace;"></p>
-      <p style="max-width: 400px; font-size: 0.8rem; line-height: 1.5;">
-        The neural interface encountered a fatal sync error. 
-        This is likely due to stale browser cache.
-      </p>
-      <button class="reset-btn" onclick="hardReset()">PERFORM_HARD_RESET</button>
-      <p style="margin-top: 20px; font-size: 0.6rem; opacity: 0.4;">KUNCI JAWABAN: Use CTRL + SHIFT + R if F5 is blocked by projector menu.</p>
+      <div style="font-size: 5rem; margin-bottom: 20px;">🛡️</div>
+      <h1 style="letter-spacing: 10px; font-weight: 900; margin: 0;">RECOVERY_MODE</h1>
+      <p id="fail-reason" style="background: rgba(255,0,85,0.1); padding: 10px 20px; border-radius: 4px; margin: 20px 0; font-family: monospace; font-weight: bold;"></p>
+      
+      <div style="max-width: 600px; text-align: left; background: rgba(255,255,255,0.05); padding: 20px; border-radius: 8px; font-size: 0.9rem; line-height: 1.6;">
+        <p><strong>Penyebab:</strong> Cache browser Anda menyimpan versi lama yang sedang looping.</p>
+        <p><strong>Solusi 1:</strong> Klik tombol merah di bawah untuk Hard Reset.</p>
+        <p><strong>Solusi 2:</strong> Tekan <strong>CTRL + SHIFT + R</strong> (Shortcut Sakti).</p>
+      </div>
+
+      <button class="reset-btn" onclick="hardReset()">PERFORM NUCLEAR RESET</button>
+      <p style="margin-top: 30px; font-size: 0.7rem; opacity: 0.5;">BOT-CALL PROTOCOL // STABILITY_ENFORCED_v4.9.9</p>
     </div>
 
     <script type="module" src="/src/main.jsx"></script>
