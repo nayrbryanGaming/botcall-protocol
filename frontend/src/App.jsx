@@ -7,6 +7,11 @@ import RobotActionButton from './components/RobotActionButton.jsx';
 import RobotVisualizer from './components/RobotVisualizer.jsx';
 import './index.css';
 
+/**
+ * @component SmoothBalance
+ * @description Renders ETH balance with high-precision (8 decimals) and smooth spring animation.
+ * Optimized for displaying small faucet deposits on Base Sepolia.
+ */
 function SmoothBalance({ value }) {
     const numericValue = parseFloat(value) || 0;
     const springs = useSpring(numericValue, {
@@ -15,15 +20,15 @@ function SmoothBalance({ value }) {
         damping: 15
     });
     
-    // Increased precision to 6 decimals to see faucet funds clearly
-    const displayValue = useTransform(springs, (latest) => latest.toFixed(6));
+    // Increased precision to 8 decimals for maximum transparency of faucet funds
+    const displayValue = useTransform(springs, (latest) => latest.toFixed(8));
 
     useEffect(() => {
         springs.set(numericValue);
     }, [numericValue, springs]);
 
     return (
-        <motion.span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '110px', display: 'inline-block' }}>
+        <motion.span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '130px', display: 'inline-block' }}>
             {displayValue} ETH
         </motion.span>
     );
@@ -40,6 +45,8 @@ function App() {
     const [missionProposal, setMissionProposal] = useState(null);
     const [providers, setProviders] = useState([]);
     const [showWalletModal, setShowWalletModal] = useState(false);
+    
+    // Safety guard to prevent concurrent connection attempts
     const isConnecting = useRef(false);
 
     const [terminal, setTerminal] = useState([
@@ -48,13 +55,14 @@ function App() {
         "NETWORK // BASE SEPOLIA CONNECTED"
     ]);
 
+    // Cleanup scrolling behavior
     useEffect(() => {
         window.scrollTo(0, 0);
         if ('scrollRestoration' in window.history) {
             window.history.scrollRestoration = 'manual';
         }
 
-        // Detect EIP-6963 providers
+        // Detect multiple wallet providers (EIP-6963)
         const onAnnouncement = (e) => {
             setProviders(prev => {
                 if (prev.find(p => p.info.uuid === e.detail.info.uuid)) return prev;
@@ -69,25 +77,30 @@ function App() {
         };
     }, []);
 
+    // Initial connection check
     useEffect(() => {
         const checkConnection = async () => {
             if (window.ethereum) {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    connectWallet();
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        connectWallet();
+                    }
+                } catch (e) {
+                    console.error("Initial check failed", e);
                 }
             }
         };
         checkConnection();
 
         if (window.ethereum) {
-            // REPLACED RELOAD WITH STATE UPDATE
+            // SOFT SYNC: No window.location.reload() allowed.
             const handleAccounts = () => {
-                addTerminalLog("AUTH // Account shift detected.");
+                addTerminalLog("AUTH // Account shift detected. Re-syncing...");
                 connectWallet();
             };
             const handleChain = () => {
-                addTerminalLog("NET // Network shift detected.");
+                addTerminalLog("NET // Network shift detected. Re-syncing...");
                 connectWallet();
             };
 
@@ -129,23 +142,27 @@ function App() {
         }
     };
 
+    // Task polling (slowed down for stability)
     useEffect(() => {
         if (contract) {
-            const interval = setInterval(() => loadTasks(contract), 3000);
+            const interval = setInterval(() => loadTasks(contract), 5000);
             return () => clearInterval(interval);
         }
     }, [contract]);
 
+    /**
+     * @function connectWallet
+     * @description Orchestrates the connection to the user's wallet and forces alignment with Base Sepolia.
+     */
     const connectWallet = async (selectedProvider = null) => {
         if (isConnecting.current) return;
         isConnecting.current = true;
 
-        if (!selectedProvider && !window.ethereum) {
+        const injectedProvider = selectedProvider?.provider || window.ethereum;
+        if (!injectedProvider) {
             isConnecting.current = false;
             return addTerminalLog("ERR // No wallet provider detected.");
         }
-        
-        const injectedProvider = selectedProvider?.provider || window.ethereum;
         
         try {
             const accounts = await injectedProvider.request({ method: 'eth_requestAccounts' });
@@ -157,20 +174,20 @@ function App() {
             let network = await p.getNetwork();
             let currentChainId = Number(network.chainId);
             
-            // ENSURE BASE SEPOLIA (84532 / 0x14a34)
+            // Base Sepolia: 84532 (0x14a34)
             if (currentChainId !== 84532) {
-                addTerminalLog("NET // Aligning to Base Sepolia...");
+                addTerminalLog("NET // Network alignment required (Base Sepolia).");
                 try {
                     await injectedProvider.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x14a34' }],
                     });
-                    // Refresh provider state after switch to ensure correct data
+                    // Re-instantiate provider to capture the new cluster context
                     p = new ethers.BrowserProvider(injectedProvider);
                     network = await p.getNetwork();
-                    currentChainId = Number(network.chainId);
                 } catch (switchErr) {
                     if (switchErr.code === 4902) {
+                        addTerminalLog("NET // Adding Base Sepolia cluster to wallet...");
                         await injectedProvider.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
@@ -198,10 +215,11 @@ function App() {
             addTerminalLog(`CONNECTED // Node ${accounts[0].slice(0, 8)} authorized.`);
             setShowWalletModal(false);
         } catch (error) {
-            console.error("Connection error:", error);
-            addTerminalLog(`ERR // Connection failed or rejected.`);
+            console.error("Auth error:", error);
+            addTerminalLog(`ERR // Auth sequence rejected.`);
         } finally {
-            isConnecting.current = false;
+            // Small delay before allowing another connection attempt
+            setTimeout(() => { isConnecting.current = false; }, 500);
         }
     };
 
@@ -213,6 +231,7 @@ function App() {
         addTerminalLog("AUTH // Neural link severed.");
     };
 
+    // Balance heart-beat (Updates every 5 seconds)
     useEffect(() => {
         let interval;
         if (provider && account) {
@@ -221,7 +240,7 @@ function App() {
                     const bal = await provider.getBalance(account);
                     setBalance(ethers.formatEther(bal));
                 } catch (e) {
-                    console.error("Balance fetch failed", e);
+                    console.error("Balance fetch failure", e);
                 }
             }, 5000);
         }
@@ -318,7 +337,7 @@ function App() {
                     <div>
                         <h1>BOT-CALL</h1>
                         <p style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '0.1rem' }}>
-                            ROBOT ACTION NETWORK // PLATINUM v4.8.6 SUPREME
+                            ROBOT ACTION NETWORK // PLATINUM v4.8.9 SUPREME
                         </p>
                     </div>
                 </div>
@@ -364,7 +383,7 @@ function App() {
             <main>
                 <section className="hero">
                     <div className="hero-content">
-                        <h2>BOT-CALL INTERFACE // PLATINUM ULTIMATE</h2>
+                        <h2>BOT-CALL INTERFACE // TITAN PLATINUM</h2>
                         <div className="status-badge status-1 pulse-primary" style={{ display: 'inline-block', marginBottom: '1rem', padding: '0.25rem 1rem' }}>SYSTEM_OPTIMIZED</div>
                         <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', maxWidth: '700px', margin: '0 auto' }}>
                             Advanced neural link for pay-per-action robotic operations. 
