@@ -146,7 +146,13 @@ function App() {
             }
         }, 3000);
 
-        syncSession();
+        // HIDE THE BOOT LOADER FROM index.html
+        const hideLoader = () => {
+            const loader = document.getElementById('boot-loader');
+            if (loader) loader.style.display = 'none';
+        }
+
+        syncSession().then(hideLoader).catch(hideLoader);
         
         const hb = setInterval(() => {
             if (account && providerRef.current) {
