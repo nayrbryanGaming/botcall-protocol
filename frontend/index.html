@@ -37,6 +37,18 @@
       .reset-btn:hover { transform: scale(1.1); filter: brightness(1.2); }
     </style>
     <script>
+      // NUCLEAR CACHE PURGE for v4.9.9+
+      if (!localStorage.getItem('v4.9.9_purged')) {
+        console.log("NUCLEAR_PURGE: Clearing stale artifacts...");
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.getRegistrations().then(regs => {
+            for(let reg of regs) reg.unregister();
+          });
+        }
+        localStorage.setItem('v4.9.9_purged', 'true');
+        // No forced reload here to avoid a loop, just prep the state
+      }
+
       // GLOBAL ERROR BOUNDARY PROTOCOL
       window.onerror = function(msg, url, line) {
         showFailsafe("FATAL_BOOT_ERROR: " + msg);
@@ -53,6 +65,7 @@
       }
 
       function hardReset() {
+        localStorage.clear();
         if ('serviceWorker' in navigator) {
           navigator.serviceWorker.getRegistrations().then(regs => {
             for(let reg of regs) reg.unregister();
@@ -61,15 +74,13 @@
         window.location.reload(true);
       }
 
-      // Detect "Static Black Screen" (Root empty for > 4s)
-      window.addEventListener('load', function() {
-        setTimeout(function() {
-          const root = document.getElementById('root');
-          if (root && root.innerHTML === "") {
-            showFailsafe("NODE_SYNC_TIMEOUT: Website failed to mount. Stale cache detected.");
-          }
-        }, 4000);
-      });
+      // AGGRESSIVE STATIC DETECTOR (Starts immediately, NO window.load wait)
+      setTimeout(function() {
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === "") {
+          showFailsafe("NODE_SYNC_TIMEOUT: Interface failed to mount. Stale cache or hardware conflict detected.");
+        }
+      }, 3500); 
     </script>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
