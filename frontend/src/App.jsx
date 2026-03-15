@@ -1,10 +1,33 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
+import { motion, useSpring, useTransform } from 'framer-motion';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
 import RobotActionButton from './components/RobotActionButton.jsx';
 import RobotVisualizer from './components/RobotVisualizer.jsx';
 import './index.css';
+
+function SmoothBalance({ value }) {
+    const numericValue = parseFloat(value) || 0;
+    const springs = useSpring(numericValue, {
+        mass: 0.8,
+        stiffness: 75,
+        damping: 15
+    });
+    
+    // Increased precision to 6 decimals to see faucet funds clearly
+    const displayValue = useTransform(springs, (latest) => latest.toFixed(6));
+
+    useEffect(() => {
+        springs.set(numericValue);
+    }, [numericValue, springs]);
+
+    return (
+        <motion.span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '110px', display: 'inline-block' }}>
+            {displayValue} ETH
+        </motion.span>
+    );
+}
 
 function App() {
     const [account, setAccount] = useState(null);
@@ -15,6 +38,9 @@ function App() {
     const [aiPrompt, setAiPrompt] = useState("");
     const [isAiThinking, setIsAiThinking] = useState(false);
     const [missionProposal, setMissionProposal] = useState(null);
+    const [providers, setProviders] = useState([]);
+    const [showWalletModal, setShowWalletModal] = useState(false);
+    const isConnecting = useRef(false);
 
     const [terminal, setTerminal] = useState([
         "PROTOCOL // SYSTEM INITIALIZED",
@@ -22,19 +48,26 @@ function App() {
         "NETWORK // BASE SEPOLIA CONNECTED"
     ]);
 
-    // Autoscroll logic removed per user request
     useEffect(() => {
         window.scrollTo(0, 0);
         if ('scrollRestoration' in window.history) {
             window.history.scrollRestoration = 'manual';
         }
-    }, []);
 
-    useEffect(() => {
-        if (account) {
-            window.scrollTo({ top: 0, behavior: 'instant' });
-        }
-    }, [account]);
+        // Detect EIP-6963 providers
+        const onAnnouncement = (e) => {
+            setProviders(prev => {
+                if (prev.find(p => p.info.uuid === e.detail.info.uuid)) return prev;
+                return [...prev, e.detail];
+            });
+        };
+        window.addEventListener("eip6963:announceProvider", onAnnouncement);
+        window.dispatchEvent(new Event("eip6963:requestProvider"));
+        
+        return () => {
+            window.removeEventListener("eip6963:announceProvider", onAnnouncement);
+        };
+    }, []);
 
     useEffect(() => {
         const checkConnection = async () => {
@@ -48,8 +81,23 @@ function App() {
         checkConnection();
 
         if (window.ethereum) {
-            window.ethereum.on('accountsChanged', () => window.location.reload());
-            window.ethereum.on('chainChanged', () => window.location.reload());
+            // REPLACED RELOAD WITH STATE UPDATE
+            const handleAccounts = () => {
+                addTerminalLog("AUTH // Account shift detected.");
+                connectWallet();
+            };
+            const handleChain = () => {
+                addTerminalLog("NET // Network shift detected.");
+                connectWallet();
+            };
+
+            window.ethereum.on('accountsChanged', handleAccounts);
+            window.ethereum.on('chainChanged', handleChain);
+
+            return () => {
+                window.ethereum.removeListener('accountsChanged', handleAccounts);
+                window.ethereum.removeListener('chainChanged', handleChain);
+            };
         }
     }, []);
 
@@ -83,46 +131,77 @@ function App() {
 
     useEffect(() => {
         if (contract) {
-            const interval = setInterval(() => loadTasks(contract), 5000);
+            const interval = setInterval(() => loadTasks(contract), 3000);
             return () => clearInterval(interval);
         }
-    }, [contract, tasks.length]);
+    }, [contract]);
 
-    const connectWallet = async () => {
-        if (!window.ethereum) return addTerminalLog("ERR // Secure Neural Link not detected.");
+    const connectWallet = async (selectedProvider = null) => {
+        if (isConnecting.current) return;
+        isConnecting.current = true;
+
+        if (!selectedProvider && !window.ethereum) {
+            isConnecting.current = false;
+            return addTerminalLog("ERR // No wallet provider detected.");
+        }
+        
+        const injectedProvider = selectedProvider?.provider || window.ethereum;
+        
         try {
-            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            const accounts = await injectedProvider.request({ method: 'eth_requestAccounts' });
+            if (!accounts || accounts.length === 0) throw new Error("No accounts found");
+            
             setAccount(accounts[0]);
 
-            const p = new ethers.BrowserProvider(window.ethereum);
-            setProvider(p);
-
-            const network = await p.getNetwork();
-            if (network.chainId !== BigInt(BASE_SEPOLIA_CHAIN_ID)) {
-                addTerminalLog("NET // Switching to Base Sepolia cluster...");
+            let p = new ethers.BrowserProvider(injectedProvider);
+            let network = await p.getNetwork();
+            let currentChainId = Number(network.chainId);
+            
+            // ENSURE BASE SEPOLIA (84532 / 0x14a34)
+            if (currentChainId !== 84532) {
+                addTerminalLog("NET // Aligning to Base Sepolia...");
                 try {
-                    await window.ethereum.request({
+                    await injectedProvider.request({
                         method: 'wallet_switchEthereumChain',
-                        params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }],
+                        params: [{ chainId: '0x14a34' }],
                     });
-                } catch (err) {
-                    addTerminalLog("ERR // Network switch failed.");
-                    return;
+                    // Refresh provider state after switch to ensure correct data
+                    p = new ethers.BrowserProvider(injectedProvider);
+                    network = await p.getNetwork();
+                    currentChainId = Number(network.chainId);
+                } catch (switchErr) {
+                    if (switchErr.code === 4902) {
+                        await injectedProvider.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: '0x14a34',
+                                chainName: 'Base Sepolia',
+                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                rpcUrls: ['https://sepolia.base.org'],
+                                blockExplorerUrls: ['https://sepolia.basescan.org']
+                            }],
+                        });
+                        p = new ethers.BrowserProvider(injectedProvider);
+                    }
                 }
             }
 
+            setProvider(p);
             const signer = await p.getSigner();
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             setContract(c);
             loadTasks(c);
             
-            // Initial balance fetch
             const bal = await p.getBalance(accounts[0]);
             setBalance(ethers.formatEther(bal));
-
+            
             addTerminalLog(`CONNECTED // Node ${accounts[0].slice(0, 8)} authorized.`);
+            setShowWalletModal(false);
         } catch (error) {
-            addTerminalLog(`ERR // Auth sequence rejected.`);
+            console.error("Connection error:", error);
+            addTerminalLog(`ERR // Connection failed or rejected.`);
+        } finally {
+            isConnecting.current = false;
         }
     };
 
@@ -134,15 +213,19 @@ function App() {
         addTerminalLog("AUTH // Neural link severed.");
     };
 
-    // Auto-update balance
     useEffect(() => {
+        let interval;
         if (provider && account) {
-            const interval = setInterval(async () => {
-                const bal = await provider.getBalance(account);
-                setBalance(ethers.formatEther(bal));
-            }, 10000);
-            return () => clearInterval(interval);
+            interval = setInterval(async () => {
+                try {
+                    const bal = await provider.getBalance(account);
+                    setBalance(ethers.formatEther(bal));
+                } catch (e) {
+                    console.error("Balance fetch failed", e);
+                }
+            }, 5000);
         }
+        return () => clearInterval(interval);
     }, [provider, account]);
 
     const handleAiCommand = async (e) => {
@@ -212,7 +295,7 @@ function App() {
             <div className="protocol-status-bar">
                 <div className="status-item">
                     <span className="status-label">PROTOCOL_SYNC</span>
-                    <span className="status-value">v3.3.5</span>
+                    <span className="status-value highlight" style={{ color: 'var(--primary)' }}>ALIGNED</span>
                 </div>
                 <div className="status-item">
                     <span className="status-label">NETWORK</span>
@@ -235,13 +318,18 @@ function App() {
                     <div>
                         <h1>BOT-CALL</h1>
                         <p style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: '0.1rem' }}>
-                            ROBOT ACTION NETWORK // MULTI-WALLET ENABLED
+                            ROBOT ACTION NETWORK // PLATINUM v4.8.6 SUPREME
                         </p>
                     </div>
                 </div>
 
                 {!account ? (
-                    <button className="connect-btn" onClick={connectWallet} style={{ fontSize: '0.7rem', padding: '0.5rem 1rem' }}>CONNECT WALLET</button>
+                    <button 
+                        className="connect-btn" 
+                        onClick={() => providers.length > 1 ? setShowWalletModal(true) : connectWallet()} 
+                        style={{ fontSize: '0.7rem', padding: '0.5rem 1rem' }}>
+                        {providers.length > 1 ? 'SELECT WALLET' : 'CONNECT WALLET'}
+                    </button>
                 ) : (
                     <div className="account-info-container" style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                         <div className="account-info glass" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
@@ -250,11 +338,12 @@ function App() {
                             <span style={{ margin: '0 0.75rem', opacity: 0.2 }}>|</span>
                             <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
                                 <span className="heartbeat-pulse" style={{ width: '6px', height: '6px' }}></span>
-                                <span style={{ fontWeight: 'bold', color: 'var(--primary)' }}>{parseFloat(balance).toFixed(4)} ETH</span>
+                                <SmoothBalance value={balance} />
                             </span>
                         </div>
                         <button 
                             onClick={disconnectWallet}
+                            className="disconnect-btn"
                             style={{ 
                                 background: 'transparent', 
                                 border: '1px solid var(--error)', 
@@ -275,7 +364,7 @@ function App() {
             <main>
                 <section className="hero">
                     <div className="hero-content">
-                        <h2>BOT-CALL INTERFACE // PLATINUM v4</h2>
+                        <h2>BOT-CALL INTERFACE // PLATINUM ULTIMATE</h2>
                         <div className="status-badge status-1 pulse-primary" style={{ display: 'inline-block', marginBottom: '1rem', padding: '0.25rem 1rem' }}>SYSTEM_OPTIMIZED</div>
                         <p style={{ fontSize: '0.9rem', color: 'var(--text-dim)', maxWidth: '700px', margin: '0 auto' }}>
                             Advanced neural link for pay-per-action robotic operations. 
@@ -391,7 +480,68 @@ function App() {
                 </section>
             </main>
 
-            <footer style={{ marginTop: '3rem', padding: '1.5rem', textAlign: 'center', borderTop: '1px solid var(--glass-border)' }}>
+            {showWalletModal && providers.length > 1 && (
+                <div style={{ 
+                    position: 'fixed', 
+                    top: 0, 
+                    left: 0, 
+                    right: 0, 
+                    bottom: 0, 
+                    background: 'rgba(0, 0, 0, 0.8)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="glass" style={{ 
+                        padding: '2rem', 
+                        borderRadius: '16px', 
+                        maxWidth: '500px',
+                        width: '90%'
+                    }}>
+                        <h2 style={{ color: 'var(--primary)', marginBottom: '1rem' }}>SELECT WALLET</h2>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.75rem' }}>
+                            {providers.map((p) => (
+                                <button
+                                    key={p.info.uuid}
+                                    onClick={() => connectWallet(p)}
+                                    style={{
+                                        padding: '1rem',
+                                        background: 'rgba(0, 242, 255, 0.1)',
+                                        border: '1px solid var(--primary)',
+                                        color: '#fff',
+                                        cursor: 'pointer',
+                                        borderRadius: '8px',
+                                        fontSize: '1rem',
+                                        fontWeight: '600',
+                                        transition: 'all 0.2s'
+                                    }}
+                                >
+                                    {p.info.name}
+                                </button>
+                            ))}
+                        </div>
+                        <button
+                            onClick={() => setShowWalletModal(false)}
+                            style={{
+                                marginTop: '1rem',
+                                padding: '0.75rem',
+                                background: 'transparent',
+                                border: '1px solid var(--glass-border)',
+                                color: 'var(--text-dim)',
+                                cursor: 'pointer',
+                                borderRadius: '8px',
+                                width: '100%',
+                                fontSize: '0.9rem'
+                            }}
+                        >
+                            CANCEL
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            <footer>
                 <p style={{ color: 'var(--text-dim)', fontSize: '0.6rem', letterSpacing: '0.1em', marginBottom: '0.5rem' }}>
                     DEPLOYED_CONTRACT: <a href={`https://sepolia.basescan.org/address/${CONTRACT_ADDRESS}`} target="_blank" rel="noreferrer" style={{ color: 'var(--primary)', textDecoration: 'none' }}>{CONTRACT_ADDRESS}</a>
                 </p>
