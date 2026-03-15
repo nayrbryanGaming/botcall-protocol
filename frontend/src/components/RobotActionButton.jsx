@@ -34,47 +34,44 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
 
     const Icons = {
         SCAN: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" strokeOpacity="0.3" />
-                <path d="M12 2a10 10 0 0 1 10 10" />
-                <path d="M12 12l8.5-3.5" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.5" />
+                <path d="M12 12l7-7" strokeWidth="2">
+                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
+                </path>
                 <circle cx="12" cy="12" r="2" fill="currentColor" />
-                <path d="M12 7v1M12 16v1M7 12h1M16 12h1" opacity="0.5" />
             </svg>
         ),
         MOVE: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 12h14M12 5l7 7-7 7" />
-                <path d="M2 12h1" strokeOpacity="0.5" />
-                <path d="M19 12h3" />
-                <circle cx="12" cy="12" r="3" strokeDasharray="2 2" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M13 17l5-5-5-5M6 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M2 12h4m7 0h1" opacity="0.3" />
             </svg>
         ),
         PICK_OBJECT: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                <path d="M5 11h14v10H5z" />
-                <path d="M10 14v4M14 14v4" />
-                <circle cx="12" cy="5" r="1" fill="currentColor" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7 11V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6" />
+                <path d="M5 11h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9z" />
+                <path d="M10 14h4M12 11v6" opacity="0.5" />
             </svg>
         ),
         PATROL: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 2L3 7v9c0 5 9 6 9 6s9-1 9-6V7l-9-5z" />
-                <circle cx="12" cy="12" r="3" />
-                <path d="M12 9v1M12 14v1M9 12h1M14 12h1" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <circle cx="12" cy="11" r="3" />
+                <path d="M12 8v1M12 13v1M9 11h1M14 11h1" opacity="0.6" />
             </svg>
         ),
         RECHARGE: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 18H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h31.9" />
-                <path d="M6 11V7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2h-1" />
-                <path d="M11 7l-3 5h4l-3 5" fill="currentColor" />
-                <path d="M23 13v-2" />
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <rect x="2" y="7" width="16" height="10" rx="2" />
+                <path d="M22 11v2M6 10l-2 2h4l-2 2" fill="currentColor" />
+                <path d="M18 10h1v4h-1" opacity="0.5" />
             </svg>
         ),
         WAVE: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5" />
                 <path d="M14 10V5a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v10" />
                 <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
