@@ -84,7 +84,11 @@ function App() {
                 try {
                     const accounts = await window.ethereum.request({ method: 'eth_accounts' });
                     if (accounts.length > 0) {
-                        connectWallet();
+                        // Avoid auto-connect on load if it might trigger a network switch loop
+                        // instead, we just set the account and wait for user interaction or sync
+                        setAccount(accounts[0]);
+                        const p = new ethers.BrowserProvider(window.ethereum);
+                        setProvider(p);
                     }
                 } catch (e) {
                     console.error("Initial check failed", e);
@@ -94,14 +98,21 @@ function App() {
         checkConnection();
 
         if (window.ethereum) {
-            // SOFT SYNC: No window.location.reload() allowed.
-            const handleAccounts = () => {
-                addTerminalLog("AUTH // Account shift detected. Re-syncing...");
-                connectWallet();
+            const handleAccounts = (accounts) => {
+                if (accounts.length === 0) {
+                    disconnectWallet();
+                } else {
+                    addTerminalLog("AUTH // Account shift detected.");
+                    setAccount(accounts[0]);
+                }
             };
             const handleChain = () => {
-                addTerminalLog("NET // Network shift detected. Re-syncing...");
-                connectWallet();
+                addTerminalLog("NET // Network shift detected. Re-syncing provider...");
+                // Just refresh the provider, don't trigger a full connect sequence that requests switches
+                if (window.ethereum) {
+                    const p = new ethers.BrowserProvider(window.ethereum);
+                    setProvider(p);
+                }
             };
 
             window.ethereum.on('accountsChanged', handleAccounts);
@@ -168,7 +179,8 @@ function App() {
             const accounts = await injectedProvider.request({ method: 'eth_requestAccounts' });
             if (!accounts || accounts.length === 0) throw new Error("No accounts found");
             
-            setAccount(accounts[0]);
+            const userAccount = accounts[0];
+            setAccount(userAccount);
 
             let p = new ethers.BrowserProvider(injectedProvider);
             let network = await p.getNetwork();
@@ -176,18 +188,18 @@ function App() {
             
             // Base Sepolia: 84532 (0x14a34)
             if (currentChainId !== 84532) {
-                addTerminalLog("NET // Network alignment required (Base Sepolia).");
+                addTerminalLog("NET // Aligning with Base Sepolia...");
                 try {
                     await injectedProvider.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x14a34' }],
                     });
-                    // Re-instantiate provider to capture the new cluster context
+                    // After switch, wait a moment for the provider to stabilize
+                    await new Promise(resolve => setTimeout(resolve, 1000));
                     p = new ethers.BrowserProvider(injectedProvider);
-                    network = await p.getNetwork();
                 } catch (switchErr) {
                     if (switchErr.code === 4902) {
-                        addTerminalLog("NET // Adding Base Sepolia cluster to wallet...");
+                        addTerminalLog("NET // Adding Base Sepolia cluster...");
                         await injectedProvider.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
@@ -199,6 +211,8 @@ function App() {
                             }],
                         });
                         p = new ethers.BrowserProvider(injectedProvider);
+                    } else {
+                        throw switchErr;
                     }
                 }
             }
@@ -207,19 +221,19 @@ function App() {
             const signer = await p.getSigner();
             const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             setContract(c);
-            loadTasks(c);
             
-            const bal = await p.getBalance(accounts[0]);
+            // Explicitly load balance after connection to fix the 0.000 ETH issue
+            const bal = await p.getBalance(userAccount);
             setBalance(ethers.formatEther(bal));
             
-            addTerminalLog(`CONNECTED // Node ${accounts[0].slice(0, 8)} authorized.`);
+            loadTasks(c);
+            addTerminalLog(`CONNECTED // Node ${userAccount.slice(0, 8)} authorized.`);
             setShowWalletModal(false);
         } catch (error) {
             console.error("Auth error:", error);
-            addTerminalLog(`ERR // Auth sequence rejected.`);
+            addTerminalLog(`ERR // Auth sequence failed: ${error.message.slice(0, 30)}`);
         } finally {
-            // Small delay before allowing another connection attempt
-            setTimeout(() => { isConnecting.current = false; }, 500);
+            isConnecting.current = false;
         }
     };
 
