@@ -135,7 +135,7 @@ function App() {
         }
     };
 
-    // Initial mount sync only
+    // Initial mount sync only - THIS KILLS THE REFRESH LOOP
     useEffect(() => {
         syncSession();
         // Fallback initialized if sync is slow or no wallet
@@ -144,19 +144,23 @@ function App() {
                 setIsInitialized(true);
                 initializedRef.current = true;
             }
-        }, 3000);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+    }, []); // Empty dependency array is critical here.
+
+    // Background heartbeat (separate useEffect)
+    useEffect(() => {
+        if (!account) return;
         
         const hb = setInterval(() => {
-            if (account && providerRef.current) {
+            if (providerRef.current) {
                 loadTasks();
                 providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
             }
         }, 10000);
         
-        return () => {
-            clearTimeout(timer);
-            clearInterval(hb);
-        };
+        return () => clearInterval(hb);
     }, [account]);
 
     useEffect(() => {
