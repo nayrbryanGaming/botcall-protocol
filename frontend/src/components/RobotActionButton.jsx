@@ -36,38 +36,43 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
         SCAN: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.5" />
-                <path d="M12 12l7-7" strokeWidth="2">
-                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="2s" repeatCount="indefinite" />
-                </path>
-                <circle cx="12" cy="12" r="2" fill="currentColor" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.4" />
+                <g>
+                    <path d="M12 12l8-5" strokeWidth="2" stroke="var(--primary)">
+                       <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="3s" repeatCount="indefinite" />
+                    </path>
+                    <circle cx="12" cy="12" r="2" fill="var(--primary)" />
+                </g>
+                <circle cx="12" cy="12" r="6" strokeDasharray="2 4" opacity="0.3" />
             </svg>
         ),
         MOVE: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M13 17l5-5-5-5M6 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 12h4m7 0h1" opacity="0.3" />
+                <path d="M2 12h8" opacity="0.3" strokeWidth="1" />
+                <rect x="2" y="11" width="2" height="2" fill="currentColor" opacity="0.5" />
             </svg>
         ),
         PICK_OBJECT: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M7 11V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6" />
-                <path d="M5 11h14v9a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-9z" />
-                <path d="M10 14h4M12 11v6" opacity="0.5" />
+                <path d="M4 11h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8z" />
+                <path d="M9 15h6M12 11v8" opacity="0.4" />
+                <path d="M7 11l-2 4m12-4l2 4" opacity="0.6" />
             </svg>
         ),
         PATROL: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <circle cx="12" cy="11" r="3" />
-                <path d="M12 8v1M12 13v1M9 11h1M14 11h1" opacity="0.6" />
+                <path d="M9 11l2 2 4-4" strokeWidth="2" />
+                <circle cx="12" cy="11" r="5" strokeOpacity="0.2" />
             </svg>
         ),
         RECHARGE: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="7" width="16" height="10" rx="2" />
-                <path d="M22 11v2M6 10l-2 2h4l-2 2" fill="currentColor" />
-                <path d="M18 10h1v4h-1" opacity="0.5" />
+                <rect x="2" y="6" width="16" height="12" rx="2" strokeWidth="2" />
+                <path d="M22 10v4M6 12l2-3h-3l2-3" fill="var(--primary)" transform="translate(4, 5)" />
+                <path d="M18 9h1v6h-1" opacity="0.4" />
             </svg>
         ),
         WAVE: (

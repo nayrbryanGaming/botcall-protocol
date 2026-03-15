@@ -35,21 +35,32 @@ function SmoothBalance({ value }) {
 }
 
 function App() {
-    // Defensive tracking to prevent re-render loops
-    const currentAccount = useRef(null);
-    const currentChainId = useRef(null);
-    const isConnecting = useRef(false);
-    const lastBalanceFetch = useRef(0);
-    
-    // Safety guard to prevent concurrent connection attempts
+    // State management
+    const [account, setAccount] = useState(null);
+    const [balance, setBalance] = useState("0");
+    const [tasks, setTasks] = useState([]);
+    const [aiPrompt, setAiPrompt] = useState("");
+    const [isAiThinking, setIsAiThinking] = useState(false);
+    const [missionProposal, setMissionProposal] = useState(null);
     const [providers, setProviders] = useState([]);
     const [showWalletModal, setShowWalletModal] = useState(false);
+    
+    // Stable Refs for logic (prevents loops)
+    const providerRef = useRef(null);
+    const contractRef = useRef(null);
+    const isConnecting = useRef(false);
+    const lastChainId = useRef(null);
 
     const [terminal, setTerminal] = useState([
         "PROTOCOL // SYSTEM INITIALIZED",
         "AUTH // AWAITING SECURE LINK...",
-        "NETWORK // BASE SEPOLIA CONNECTED"
+        "NETWORK // BASE SEPOLIA"
     ]);
+
+    const addTerminalLog = (msg) => {
+        const timestamp = new Date().toLocaleTimeString([], { hour12: false });
+        setTerminal(prev => [...prev.slice(-20), `[${timestamp}] ${msg}`]);
+    };
 
     // Cleanup scrolling behavior
     useEffect(() => {
@@ -73,79 +84,33 @@ function App() {
         };
     }, []);
 
-    // Account and Chain ID state with sync to refs
-    const [account, setAccount] = useState(null);
-    const [provider, setProvider] = useState(null);
-    const [contract, setContract] = useState(null);
-    const [balance, setBalance] = useState("0");
-    const [tasks, setTasks] = useState([]);
-    const [aiPrompt, setAiPrompt] = useState("");
-    const [isAiThinking, setIsAiThinking] = useState(false);
-    const [missionProposal, setMissionProposal] = useState(null);
-
-    // Synchronize refs with state to prevent loops
-    useEffect(() => { currentAccount.current = account; }, [account]);
-
-    // Initial connection check
-    useEffect(() => {
-        const checkConnection = async () => {
-            if (window.ethereum) {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0 && accounts[0] !== currentAccount.current) {
-                        addTerminalLog("AUTH // Restoring session...");
-                        setAccount(accounts[0]);
-                        const p = new ethers.BrowserProvider(window.ethereum);
-                        setProvider(p);
-                    }
-                } catch (e) {
-                    console.error("Initial check failed", e);
+    const syncSession = async () => {
+        if (!window.ethereum || isConnecting.current) return;
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                // Only sync if ALREADY on Base Sepolia (84532)
+                if (chainId === '0x14a34') {
+                    setAccount(accounts[0]);
+                    providerRef.current = new ethers.BrowserProvider(window.ethereum);
+                    const signer = await providerRef.current.getSigner();
+                    contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
+                    const bal = await providerRef.current.getBalance(accounts[0]);
+                    setBalance(ethers.formatEther(bal));
+                    loadTasks();
                 }
             }
-        };
-        checkConnection();
-
-        if (window.ethereum) {
-            const handleAccounts = (accounts) => {
-                const newAcc = accounts.length > 0 ? accounts[0] : null;
-                if (newAcc !== currentAccount.current) {
-                    addTerminalLog(`AUTH // Account shift: ${newAcc?.slice(0, 8) || 'Disconnected'}`);
-                    if (!newAcc) disconnectWallet();
-                    else setAccount(newAcc);
-                }
-            };
-            
-            const handleChain = (chainId) => {
-                const newId = Number(chainId);
-                if (newId !== currentChainId.current) {
-                    addTerminalLog(`NET // Chain shift detected: ${newId}`);
-                    currentChainId.current = newId;
-                    // Refresh provider but don't force a switch loop
-                    const p = new ethers.BrowserProvider(window.ethereum);
-                    setProvider(p);
-                }
-            };
-
-            window.ethereum.on('accountsChanged', handleAccounts);
-            window.ethereum.on('chainChanged', handleChain);
-
-            return () => {
-                window.ethereum.removeListener('accountsChanged', handleAccounts);
-                window.ethereum.removeListener('chainChanged', handleChain);
-            };
+        } catch (e) {
+            console.error("Sync failed", e);
         }
-    }, []);
-
-    const addTerminalLog = (msg) => {
-        const timestamp = new Date().toLocaleTimeString([], { hour12: false });
-        setTerminal(prev => [...prev.slice(-25), `[${timestamp}] ${msg}`]);
     };
 
-    const loadTasks = async (contractInstance) => {
-        if (!contractInstance) return;
+    const loadTasks = async () => {
+        if (!contractRef.current) return;
         try {
-            const latestTasks = await contractInstance.getLatestTasks(15);
-            const taskArray = latestTasks.map(t => ({
+            const latestTasks = await contractRef.current.getLatestTasks(12);
+            setTasks(latestTasks.map(t => ({
                 id: Number(t.id),
                 requester: t.requester,
                 executor: t.assignedExecutor,
@@ -153,69 +118,73 @@ function App() {
                 reward: t.reward,
                 status: Number(t.status),
                 timestamp: Number(t.timestamp)
-            }));
-
-            if (taskArray.length > tasks.length && tasks.length > 0) {
-                addTerminalLog(`SYNC // New mission detected in ledger.`);
-            }
-            setTasks(taskArray);
+            })));
         } catch (error) {
             console.error("Load tasks error", error);
         }
     };
 
-    // Task polling (slowed down for stability)
     useEffect(() => {
-        if (contract) {
-            const interval = setInterval(() => loadTasks(contract), 5000);
-            return () => clearInterval(interval);
-        }
-    }, [contract]);
+        syncSession();
+        const interval = setInterval(() => {
+            if (account) {
+                loadTasks();
+                if (providerRef.current) {
+                    providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
+                }
+            }
+        }, 8000);
+        return () => clearInterval(interval);
+    }, [account]);
 
-    /**
-     * @function connectWallet
-     * @description Orchestrates the connection to the user's wallet and forces alignment with Base Sepolia.
-     */
+    useEffect(() => {
+        if (!window.ethereum) return;
+
+        const handleAccounts = (accs) => {
+            if (accs.length === 0) {
+                setAccount(null);
+                providerRef.current = null;
+                contractRef.current = null;
+            } else if (accs[0] !== account) {
+                syncSession();
+            }
+        };
+
+        const handleChain = (cid) => {
+            if (cid !== lastChainId.current) {
+                lastChainId.current = cid;
+                syncSession();
+            }
+        };
+
+        window.ethereum.on('accountsChanged', handleAccounts);
+        window.ethereum.on('chainChanged', handleChain);
+        return () => {
+            window.ethereum.removeListener('accountsChanged', handleAccounts);
+            window.ethereum.removeListener('chainChanged', handleChain);
+        };
+    }, [account]);
+
     const connectWallet = async (selectedProvider = null) => {
         if (isConnecting.current) return;
         isConnecting.current = true;
+        const injected = selectedProvider?.provider || window.ethereum;
 
-        const injectedProvider = selectedProvider?.provider || window.ethereum;
-        if (!injectedProvider) {
-            isConnecting.current = false;
-            return addTerminalLog("ERR // No wallet provider detected.");
-        }
-        
         try {
             addTerminalLog("AUTH // Initiating handshake...");
-            const accounts = await injectedProvider.request({ method: 'eth_requestAccounts' });
-            if (!accounts || accounts.length === 0) throw new Error("No accounts found");
-            
-            const userAccount = accounts[0];
-            setAccount(userAccount);
+            const accounts = await injected.request({ method: 'eth_requestAccounts' });
+            let chainId = await injected.request({ method: 'eth_chainId' });
 
-            let p = new ethers.BrowserProvider(injectedProvider);
-            let network = await p.getNetwork();
-            let currentId = Number(network.chainId);
-            currentChainId.current = currentId;
-            
-            // Base Sepolia: 84532 (0x14a34)
-            if (currentId !== 84532) {
-                addTerminalLog("NET // Aligning cluster with Base Sepolia...");
+            if (chainId !== '0x14a34') {
+                addTerminalLog("NET // Aligning with Base Sepolia...");
                 try {
-                    await injectedProvider.request({
+                    await injected.request({
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId: '0x14a34' }],
                     });
-                    // IMPORTANT: Wait for stabilization to prevent loop
-                    await new Promise(r => setTimeout(r, 1500));
-                    p = new ethers.BrowserProvider(injectedProvider);
-                    const newNetwork = await p.getNetwork();
-                    currentChainId.current = Number(newNetwork.chainId);
-                } catch (switchErr) {
-                    if (switchErr.code === 4902) {
-                        addTerminalLog("NET // Injecting Base Sepolia cluster...");
-                        await injectedProvider.request({
+                } catch (err) {
+                    if (err.code === 4902) {
+                        await injected.request({
                             method: 'wallet_addEthereumChain',
                             params: [{
                                 chainId: '0x14a34',
@@ -225,31 +194,22 @@ function App() {
                                 blockExplorerUrls: ['https://sepolia.basescan.org']
                             }],
                         });
-                        await new Promise(r => setTimeout(r, 1500));
-                        p = new ethers.BrowserProvider(injectedProvider);
-                    } else if (switchErr.code === 4001) {
-                        addTerminalLog("ERR // User rejected network alignment.");
-                        throw switchErr;
-                    }
+                    } else throw err;
                 }
             }
 
-            setProvider(p);
-            const signer = await p.getSigner();
-            const c = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-            setContract(c);
+            setAccount(accounts[0]);
+            providerRef.current = new ethers.BrowserProvider(injected);
+            const signer = await providerRef.current.getSigner();
+            contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
             
-            // DEFENSIVE BALANCE FETCH
-            const bal = await p.getBalance(userAccount);
-            const formattedBal = ethers.formatEther(bal);
-            setBalance(formattedBal);
-            addTerminalLog(`CONNECTED // Node Ready. Balance: ${formattedBal.slice(0, 10)} ETH`);
-            
-            loadTasks(c);
+            const bal = await providerRef.current.getBalance(accounts[0]);
+            setBalance(ethers.formatEther(bal));
+            addTerminalLog(`CONNECTED // Node Ready.`);
             setShowWalletModal(false);
+            loadTasks();
         } catch (error) {
-            console.error("Auth error:", error);
-            addTerminalLog(`ERR // Handshake failed: ${error.message.slice(0, 40)}`);
+            addTerminalLog(`ERR // Handshake failed.`);
         } finally {
             isConnecting.current = false;
         }
@@ -310,21 +270,21 @@ function App() {
     };
 
     const executeMission = async () => {
-        if (!missionProposal || !contract) return;
+        if (!missionProposal || !contractRef.current) return;
         const { action, reward } = missionProposal;
 
         addTerminalLog(`USER >> MISSION AUTHORIZED: ${action.toUpperCase()}`);
         addTerminalLog("TX >> Broadcasting to blockchain...");
 
         try {
-            const tx = await contract.requestAction(action, {
+            const tx = await contractRef.current.requestAction(action, {
                 value: ethers.parseEther(reward)
             });
             setMissionProposal(null);
             addTerminalLog(`TX >> Hash: ${tx.hash.slice(0, 16)}...`);
             await tx.wait();
             addTerminalLog("TX // Confirmed. Mission is live.");
-            loadTasks(contract);
+            loadTasks();
         } catch (error) {
             addTerminalLog(`TX // Failed: ${error.reason || "User aborted"}`);
         }
@@ -446,12 +406,12 @@ function App() {
                         </section>
 
                         <div className="action-grid" style={{ marginTop: '2rem' }}>
-                            <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="PICK_OBJECT" rewardEth="0.0003" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="PATROL" rewardEth="0.0005" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="WAVE" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
-                            <RobotActionButton actionName="RECHARGE" rewardEth="0.0001" disabled={!contract} onActionInitiated={() => loadTasks(contract)} />
+                            <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
+                            <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!account} onActionInitiated={loadTasks} />
+                            <RobotActionButton actionName="PICK_OBJECT" rewardEth="0.0003" disabled={!account} onActionInitiated={loadTasks} />
+                            <RobotActionButton actionName="PATROL" rewardEth="0.0005" disabled={!account} onActionInitiated={loadTasks} />
+                            <RobotActionButton actionName="WAVE" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
+                            <RobotActionButton actionName="RECHARGE" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
                         </div>
                     </div>
 
