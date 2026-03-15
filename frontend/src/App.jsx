@@ -137,31 +137,18 @@ function App() {
 
     // Initial mount sync only - THIS KILLS THE REFRESH LOOP
     useEffect(() => {
+        // Run sync exactly once.
         syncSession();
-        // Fallback initialized if sync is slow or no wallet
-        const timer = setTimeout(() => {
-            if (!initializedRef.current) {
-                setIsInitialized(true);
-                initializedRef.current = true;
-            }
-        }, 2000);
-        
-        return () => clearTimeout(timer);
-    }, []); // Empty dependency array is critical here.
-
-    // Background heartbeat (separate useEffect)
-    useEffect(() => {
-        if (!account) return;
         
         const hb = setInterval(() => {
-            if (providerRef.current) {
+            if (account && providerRef.current) {
                 loadTasks();
                 providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b)));
             }
-        }, 10000);
+        }, 12000);
         
         return () => clearInterval(hb);
-    }, [account]);
+    }, []); // ABSOLUTELY EMPTY ARRAY. No re-triggers ever.
 
     useEffect(() => {
         if (!window.ethereum) return;
@@ -171,15 +158,16 @@ function App() {
                 setAccount(null);
                 providerRef.current = null;
                 contractRef.current = null;
-            } else {
-                syncSession();
+                addTerminalLog("AUTH // Neural link severed by user.");
             }
+            // NO AUTO-SYNC HERE. If user changes account, they should manual refresh or it remains stable.
         };
 
         const handleChain = (cid) => {
+            // ONLY log the change. Do not force re-sync or reload.
             if (cid !== lastChainId.current) {
+                addTerminalLog(`NET // Chain state changed to ${cid}. Recommended: CTRL+SHIFT+R`);
                 lastChainId.current = cid;
-                syncSession();
             }
         };
 
