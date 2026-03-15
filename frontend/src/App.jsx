@@ -217,27 +217,13 @@ function App() {
 
     const disconnectWallet = () => {
         setAccount(null);
-        setProvider(null);
-        setContract(null);
+        providerRef.current = null;
+        contractRef.current = null;
         setBalance("0");
         addTerminalLog("AUTH // Neural link severed.");
     };
 
-    // Balance heart-beat (Updates every 5 seconds)
-    useEffect(() => {
-        let interval;
-        if (provider && account) {
-            interval = setInterval(async () => {
-                try {
-                    const bal = await provider.getBalance(account);
-                    setBalance(ethers.formatEther(bal));
-                } catch (e) {
-                    console.error("Balance fetch failure", e);
-                }
-            }, 5000);
-        }
-        return () => clearInterval(interval);
-    }, [provider, account]);
+    // Note: Balance heartbeat is already handled in the useEffect at line 127
 
     const handleAiCommand = async (e) => {
         e.preventDefault();
