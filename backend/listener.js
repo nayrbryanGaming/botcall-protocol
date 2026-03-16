@@ -81,13 +81,13 @@ async function processQueue() {
     }
 
     console.log(`\n=========================================`);
-    console.log(`[MISSION] STARTING MISSION #${task.taskId}`);
+    console.log(`[TASK] Starting task #${task.taskId}`);
     console.log(`[ACTION] ${task.action.toUpperCase()}`);
     console.log(`=========================================`);
 
     try {
         // 1. Claim Task
-        process.stdout.write("[PROTOCOL] Claiming mission... ");
+        process.stdout.write('[CHAIN] Claiming task... ');
         try {
             await sendTxWithRetry(botCallContract.startExecuting, [task.taskId]);
             console.log("SUCCESS [OK]");
@@ -100,30 +100,30 @@ async function processQueue() {
         }
 
         // 2. AI Brain
-        console.log("[BRAIN] Analyzing mission parameters...");
-        let thought = "Optimizing robotic trajectories for maximum efficiency.";
+        console.log('[AI] Preparing action plan...');
+        let thought = 'Action accepted for execution.';
         try {
             const chat = await groq.chat.completions.create({
                 messages: [
-                    { role: "system", content: "You are a robot brain. 1 sentence high-tech thought about the mission." },
+                    { role: 'system', content: 'Write one short sentence describing how the robot will execute the action.' },
                     { role: "user", content: `Mission: ${task.action}` }
                 ],
                 model: "llama3-8b-8192",
             });
             thought = chat.choices[0]?.message?.content || thought;
         } catch (e) { }
-        console.log(`[BRAIN] Analysis: "${thought}"`);
+        console.log(`[AI] Plan: "${thought}"`);
 
         // 3. Simulation
-        console.log("[PHYSICAL] Executing payload...");
+        console.log('[ROBOT] Executing action...');
         await executeAction(task.action);
 
-        // 4. Finalize
-        process.stdout.write("[PROTOCOL] Submitting proof of completion... ");
+        // 4. Finalize on-chain
+        process.stdout.write('[CHAIN] Submitting completion... ');
         await sendTxWithRetry(botCallContract.completeAction, [task.taskId]);
         console.log("DONE [OK]");
 
-        console.log(`\n[MISSION] MISSION #${task.taskId} ACCOMPLISHED`);
+        console.log(`\n[TASK] Task #${task.taskId} completed`);
         processedTasks.add(task.taskId.toString());
 
     } catch (error) {
@@ -161,7 +161,7 @@ async function checkAndRegister() {
 }
 
 async function start() {
-    console.log("\n[SYSTEM] BOT-CALL BACKEND // ENTERPRISE EDITION");
+    console.log('\n[SYSTEM] BOT-CALL BACKEND');
     console.log("=========================================");
     console.log(`RPC:      ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);
@@ -204,7 +204,7 @@ async function start() {
                     continue;
                 }
 
-                console.log(`\n[EVENT] NEW MISSION DETECTED: #${taskId} [${action.toUpperCase()}]`);
+                console.log(`\n[EVENT] ActionRequested detected: #${taskId} [${action.toUpperCase()}]`);
                 taskQueue.push({ taskId, action });
                 processQueue();
             }

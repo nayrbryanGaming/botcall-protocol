@@ -1,115 +1,135 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ethers } from 'ethers';
-import { motion, useSpring, useTransform } from 'framer-motion';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS, BASE_SEPOLIA_CHAIN_ID } from './config';
 import { interpretAction } from './services/aiAgent';
 import RobotActionButton from './components/RobotActionButton.jsx';
 import RobotVisualizer from './components/RobotVisualizer.jsx';
 import './index.css';
 
+const BASE_SEPOLIA_PARAMS = {
+    chainId: BASE_SEPOLIA_CHAIN_ID,
+    chainName: 'Base Sepolia',
+    rpcUrls: ['https://sepolia.base.org'],
+    nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+    blockExplorerUrls: ['https://sepolia.basescan.org']
+};
+
+const WALLET_INSTALL_LINKS = [
+    { name: 'MetaMask', url: 'https://metamask.io/download/' },
+    { name: 'Rainbow', url: 'https://rainbow.me/' },
+    { name: 'Rabby', url: 'https://rabby.io/' },
+    { name: 'Coinbase Wallet', url: 'https://www.coinbase.com/wallet/downloads' }
+];
+
+const FALLBACK_GAS_PRICE = 1_500_000_000n;
+
+const unwrapErrorMessage = (error) => {
+    if (!error) return '';
+
+    const candidates = [
+        error?.shortMessage,
+        error?.reason,
+        error?.info?.error?.message,
+        error?.info?.message,
+        error?.message
+    ];
+
+    return candidates.find((value) => typeof value === 'string' && value.trim().length > 0) || '';
+};
+
+const normalizeErrorMessage = (message) => {
+    if (!message) return 'Unknown error';
+
+    const lower = message.toLowerCase();
+    if (lower.includes('insufficient funds')) {
+        return 'Insufficient Base Sepolia ETH for reward and gas. Top up this wallet, then retry.';
+    }
+    if (lower.includes('user rejected') || lower.includes('user denied')) {
+        return 'Transaction was rejected in wallet.';
+    }
+    if (lower.includes('wallet is not on base sepolia')) {
+        return 'Switch wallet network to Base Sepolia first.';
+    }
+
+    return message.length > 220 ? `${message.slice(0, 220)}...` : message;
+};
+
+const getErrorMessage = (error) => normalizeErrorMessage(unwrapErrorMessage(error));
+
+const shortenAddress = (value) => {
+    if (!value) return '-';
+    return `${value.slice(0, 6)}...${value.slice(-4)}`;
+};
+
+const detectProviderName = (provider, fallback = 'Injected Wallet') => {
+    if (!provider) return fallback;
+    if (provider.isRainbow) return 'Rainbow';
+    if (provider.isRabby) return 'Rabby';
+    if (provider.isCoinbaseWallet) return 'Coinbase Wallet';
+    if (provider.isMetaMask) return 'MetaMask';
+    return fallback;
+};
+
+const uniqueProviders = (entries) => {
+    const map = new Map();
+    for (const entry of entries) {
+        if (!entry?.provider) continue;
+        const key = entry.info?.uuid || entry.info?.rdns || entry.info?.name || `${entry.provider}`;
+        if (!map.has(key)) map.set(key, entry);
+    }
+    return Array.from(map.values());
+};
+
 function SmoothBalance({ value }) {
-    const numericValue = parseFloat(value) || 0;
-    const [display, setDisplay] = useState("0.00000000");
-    const springs = useSpring(numericValue, {
-        mass: 0.8,
-        stiffness: 75,
-        damping: 15
-    });
-
-    const displayValue = useTransform(springs, (latest) => latest.toFixed(8));
-
-    useEffect(() => {
-        springs.set(numericValue);
-    }, [numericValue, springs]);
-
-    useEffect(() => {
-        // Correct way to subscribe to motion value for text rendering
-        return displayValue.on("change", (latest) => setDisplay(latest));
-    }, [displayValue]);
+    const numericValue = Number.parseFloat(value);
+    const display = Number.isFinite(numericValue) ? numericValue.toFixed(8) : '0.00000000';
 
     return (
-        <motion.span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '130px', display: 'inline-block' }}>
+        <span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '130px', display: 'inline-block' }}>
             {display} ETH
-        </motion.span>
+        </span>
     );
 }
 
 function App() {
     const [account, setAccount] = useState(null);
-    const [balance, setBalance] = useState("0");
+    const [balance, setBalance] = useState('0');
     const [tasks, setTasks] = useState([]);
-    const [aiPrompt, setAiPrompt] = useState("");
+    const [aiPrompt, setAiPrompt] = useState('');
     const [isAiThinking, setIsAiThinking] = useState(false);
     const [missionProposal, setMissionProposal] = useState(null);
     const [providers, setProviders] = useState([]);
     const [showWalletModal, setShowWalletModal] = useState(false);
-    const [isInitialized, setIsInitialized] = useState(false);
+    const [isConnectingUi, setIsConnectingUi] = useState(false);
+    const [activeChainId, setActiveChainId] = useState(null);
+    const [connectedWalletName, setConnectedWalletName] = useState('Not connected');
 
     const providerRef = useRef(null);
     const contractRef = useRef(null);
     const isConnecting = useRef(false);
-    const lastChainId = useRef(null);
-    const initializedRef = useRef(false);
 
     const [terminal, setTerminal] = useState([
-        "SYSTEM_BOOT // INITIALIZED",
-        "PROTOCOL // BOT-CALL v1.0.1",
-        "NETWORK // BASE_SEPOLIA_TESTNET_ONLY"
+        'System initialized',
+        'Target network: Base Sepolia'
     ]);
+
+    const isOnBaseSepolia = activeChainId === BASE_SEPOLIA_CHAIN_ID;
+
+    const networkLabel = useMemo(() => {
+        if (!activeChainId) return 'No network detected';
+        if (activeChainId === BASE_SEPOLIA_CHAIN_ID) return 'Base Sepolia';
+        return `Wrong network (${activeChainId})`;
+    }, [activeChainId]);
 
     const addTerminalLog = (msg) => {
         const timestamp = new Date().toLocaleTimeString([], { hour12: false });
-        setTerminal(prev => [...prev.slice(-20), `[${timestamp}] ${msg}`]);
+        setTerminal((prev) => [...prev.slice(-20), `[${timestamp}] ${msg}`]);
     };
 
-    useEffect(() => {
-        window.scrollTo(0, 0);
-        const onAnnouncement = (e) => {
-            setProviders(prev => {
-                if (prev.find(p => p.info.uuid === e.detail.info.uuid)) return prev;
-                return [...prev, e.detail];
-            });
-        };
-        window.addEventListener("eip6963:announceProvider", onAnnouncement);
-        window.dispatchEvent(new Event("eip6963:requestProvider"));
-        return () => window.removeEventListener("eip6963:announceProvider", onAnnouncement);
-    }, []);
-
-    const syncSession = async (retryCount = 0) => {
-        const hideLoader = () => {
-            const loader = document.getElementById('boot-loader');
-            if (loader) loader.style.display = 'none';
-            document.body.style.overflow = 'auto';
-        };
-
-        // If explicitly initialized, don't re-run
-        if (initializedRef.current) return;
-
-        // If no ethereum yet, retry up to 3 times (wallets can be slow)
-        if (!window.ethereum && retryCount < 3) {
-            setTimeout(() => syncSession(retryCount + 1), 500);
-            return;
-        }
-
-        try {
-            const accounts = await window.ethereum?.request({ method: 'eth_accounts' }).catch(() => []);
-            if (accounts && accounts.length > 0) {
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' }).catch(() => null);
-                if (chainId === BASE_SEPOLIA_CHAIN_ID) {
-                    setAccount(accounts[0]);
-                    providerRef.current = new ethers.BrowserProvider(window.ethereum);
-                    const signer = await providerRef.current.getSigner();
-                    contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-                    loadTasks();
-                }
-            }
-        } catch (e) {
-            console.warn("Session sync bypass.");
-        } finally {
-            setIsInitialized(true);
-            initializedRef.current = true;
-            hideLoader();
-        }
+    const hideBootLoader = () => {
+        const loader = document.getElementById('boot-loader');
+        if (loader) loader.style.display = 'none';
+        document.body.style.overflow = 'auto';
     };
 
     const loadTasks = async () => {
@@ -119,253 +139,499 @@ function App() {
             const lastId = Number(total);
             const count = Math.min(lastId, 10);
             const fetched = [];
+
             for (let i = 0; i < count; i++) {
                 const id = lastId - i;
                 if (id <= 0) break;
-                const t = await contractRef.current.tasks(id);
+                const task = await contractRef.current.tasks(id);
                 fetched.push({
-                    id: Number(t.id),
-                    requester: String(t.requester),
-                    executor: String(t.assignedExecutor),
-                    action: String(t.action),
-                    reward: t.reward.toString(),
-                    status: Number(t.status),
-                    timestamp: Number(t.timestamp)
+                    id: Number(task.id),
+                    requester: String(task.requester),
+                    executor: String(task.assignedExecutor),
+                    action: String(task.action),
+                    reward: task.reward.toString(),
+                    status: Number(task.status),
+                    timestamp: Number(task.timestamp)
                 });
             }
+
             setTasks(fetched);
         } catch (error) {
-            console.warn("Task sync pending...");
+            console.warn('Task sync failed:', getErrorMessage(error));
+        }
+    };
+
+    const refreshBalance = async (targetAccount = account) => {
+        if (!providerRef.current || !targetAccount) return;
+        try {
+            const rawBalance = await providerRef.current.getBalance(targetAccount);
+            setBalance(ethers.formatEther(rawBalance));
+        } catch (error) {
+            console.warn('Balance refresh failed:', getErrorMessage(error));
+        }
+    };
+
+    const bindWallet = async (injected, walletAddress, walletName) => {
+        providerRef.current = new ethers.BrowserProvider(injected);
+        const signer = await providerRef.current.getSigner();
+        contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
+
+        setAccount(walletAddress);
+        setConnectedWalletName(walletName || detectProviderName(injected));
+        await Promise.all([refreshBalance(walletAddress), loadTasks()]);
+    };
+
+    const addInjectedFallbackProviders = () => {
+        const injectedEntries = [];
+        const rootProvider = window.ethereum;
+
+        if (rootProvider?.providers?.length) {
+            rootProvider.providers.forEach((provider, index) => {
+                injectedEntries.push({
+                    info: {
+                        uuid: `injected-${index}`,
+                        name: detectProviderName(provider, `Injected Wallet ${index + 1}`),
+                        rdns: `injected-${index}`
+                    },
+                    provider
+                });
+            });
+        } else if (rootProvider) {
+            injectedEntries.push({
+                info: {
+                    uuid: 'window-ethereum',
+                    name: detectProviderName(rootProvider, 'Injected Wallet'),
+                    rdns: 'window-ethereum'
+                },
+                provider: rootProvider
+            });
+        }
+
+        if (injectedEntries.length > 0) {
+            setProviders((prev) => uniqueProviders([...prev, ...injectedEntries]));
         }
     };
 
     useEffect(() => {
-        const emergencyTimer = setTimeout(() => {
-            if (!initializedRef.current) {
-                setIsInitialized(true);
-                initializedRef.current = true;
-                const loader = document.getElementById('boot-loader');
-                if (loader) loader.style.display = 'none';
-                document.body.style.overflow = 'auto';
-            }
-        }, 2500);
-        syncSession();
-        return () => clearTimeout(emergencyTimer);
+        window.scrollTo(0, 0);
+
+        const onAnnouncement = (event) => {
+            if (!event?.detail?.provider) return;
+            setProviders((prev) => uniqueProviders([...prev, event.detail]));
+        };
+
+        window.addEventListener('eip6963:announceProvider', onAnnouncement);
+        window.dispatchEvent(new Event('eip6963:requestProvider'));
+        addInjectedFallbackProviders();
+
+        return () => window.removeEventListener('eip6963:announceProvider', onAnnouncement);
     }, []);
 
     useEffect(() => {
-        if (!account) return;
-        const hb = setInterval(() => {
-            if (providerRef.current) {
-                loadTasks();
-                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b))).catch(() => { });
+        const injected = window.ethereum;
+        if (!injected?.on) return;
+
+        const handleAccountsChanged = async (accounts) => {
+            if (!accounts || accounts.length === 0) {
+                disconnectWallet();
+                return;
             }
+
+            const selectedProvider = providers[0]?.provider || window.ethereum;
+            if (!selectedProvider?.request) return;
+
+            try {
+                await bindWallet(
+                    selectedProvider,
+                    accounts[0],
+                    providers[0]?.info?.name || detectProviderName(selectedProvider)
+                );
+                addTerminalLog(`Active account: ${shortenAddress(accounts[0])}`);
+            } catch (error) {
+                addTerminalLog(`Account sync failed: ${getErrorMessage(error)}`);
+            }
+        };
+
+        const handleChainChanged = async (chainId) => {
+            setActiveChainId(chainId);
+            if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+                addTerminalLog(`Network changed: ${chainId} (switch back to Base Sepolia)`);
+                return;
+            }
+
+            if (account) {
+                addTerminalLog('Network changed: Base Sepolia');
+                await refreshBalance(account);
+                await loadTasks();
+            }
+        };
+
+        injected.on('accountsChanged', handleAccountsChanged);
+        injected.on('chainChanged', handleChainChanged);
+
+        return () => {
+            injected.removeListener('accountsChanged', handleAccountsChanged);
+            injected.removeListener('chainChanged', handleChainChanged);
+        };
+    }, [account, providers]);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const restoreSession = async () => {
+            try {
+                const fallbackProvider = providers[0]?.provider || window.ethereum;
+                if (!fallbackProvider?.request) return;
+
+                const chainId = await fallbackProvider.request({ method: 'eth_chainId' }).catch(() => null);
+                if (!cancelled) setActiveChainId(chainId);
+
+                const accounts = await fallbackProvider.request({ method: 'eth_accounts' }).catch(() => []);
+                if (cancelled || !accounts || accounts.length === 0) return;
+
+                await bindWallet(
+                    fallbackProvider,
+                    accounts[0],
+                    providers[0]?.info?.name || detectProviderName(fallbackProvider)
+                );
+
+                if (!cancelled) {
+                    addTerminalLog(`Wallet detected: ${shortenAddress(accounts[0])}`);
+                    if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+                        addTerminalLog('Switch to Base Sepolia to send robot transactions.');
+                    }
+                }
+            } catch (error) {
+                if (!cancelled) {
+                    console.warn('Session restore skipped:', getErrorMessage(error));
+                }
+            } finally {
+                if (!cancelled) hideBootLoader();
+            }
+        };
+
+        restoreSession();
+        const fallbackTimer = setTimeout(() => !cancelled && hideBootLoader(), 2200);
+
+        return () => {
+            cancelled = true;
+            clearTimeout(fallbackTimer);
+        };
+    }, [providers]);
+
+    useEffect(() => {
+        if (!account || !isOnBaseSepolia) return;
+        const heartbeat = setInterval(() => {
+            refreshBalance(account);
+            loadTasks();
         }, 12000);
-        return () => clearInterval(hb);
-    }, [account]);
 
-    const connectWallet = async (selectedProvider = null) => {
+        return () => clearInterval(heartbeat);
+    }, [account, isOnBaseSepolia]);
+
+    const ensureBaseSepolia = async (injected) => {
+        const chainId = await injected.request({ method: 'eth_chainId' });
+        setActiveChainId(chainId);
+
+        if (chainId === BASE_SEPOLIA_CHAIN_ID) return;
+
+        try {
+            await injected.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }]
+            });
+        } catch (switchError) {
+            if (switchError?.code === 4902) {
+                await injected.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [BASE_SEPOLIA_PARAMS]
+                });
+            } else {
+                throw switchError;
+            }
+        }
+
+        const finalChain = await injected.request({ method: 'eth_chainId' }).catch(() => null);
+        setActiveChainId(finalChain);
+
+        if (finalChain !== BASE_SEPOLIA_CHAIN_ID) {
+            throw new Error('Wallet is not on Base Sepolia.');
+        }
+    };
+
+    const connectWallet = async (selectedEntry = null) => {
         if (isConnecting.current) return;
-        isConnecting.current = true;
+        const injected = selectedEntry?.provider || window.ethereum;
 
-        const injected = selectedProvider?.provider || window.ethereum;
-
-        if (!injected) {
-            addTerminalLog("ERR // NO_PROVIDER_FOUND");
-            isConnecting.current = false;
+        if (!injected?.request) {
+            addTerminalLog('No wallet provider detected in this browser session.');
+            setShowWalletModal(true);
             return;
         }
 
-        try {
-            addTerminalLog("AUTH // Initializing secure link...");
-            const accounts = await injected.request({ method: 'eth_requestAccounts' });
-            let chainId = await injected.request({ method: 'eth_chainId' });
+        isConnecting.current = true;
+        setIsConnectingUi(true);
 
-            if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
-                try {
-                    await injected.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }] });
-                } catch (switchError) {
-                    // This error code indicates that the chain has not been added to MetaMask.
-                    if (switchError.code === 4902) {
-                        await injected.request({
-                            method: 'wallet_addEthereumChain',
-                            params: [{
-                                chainId: BASE_SEPOLIA_CHAIN_ID,
-                                chainName: 'Base Sepolia',
-                                rpcUrls: ['https://sepolia.base.org'],
-                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                                blockExplorerUrls: ['https://sepolia.basescan.org']
-                            }]
-                        });
-                    } else {
-                        throw switchError;
-                    }
-                }
+        try {
+            const walletName = selectedEntry?.info?.name || detectProviderName(injected);
+            addTerminalLog(`Connecting wallet: ${walletName}`);
+
+            const accounts = await injected.request({ method: 'eth_requestAccounts' });
+            if (!accounts || accounts.length === 0) {
+                throw new Error('No account returned by wallet provider.');
             }
 
-            setAccount(accounts[0]);
-            providerRef.current = new ethers.BrowserProvider(injected);
-            const signer = await providerRef.current.getSigner();
-            contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-            addTerminalLog(`CONNECTED // NODE: ${accounts[0].slice(0, 6)}`);
+            await ensureBaseSepolia(injected);
+            await bindWallet(injected, accounts[0], walletName);
+
+            addTerminalLog(`Connected: ${shortenAddress(accounts[0])}`);
             setShowWalletModal(false);
-            loadTasks();
         } catch (error) {
-            addTerminalLog(`ERR // AUTH_FAILED`);
-            console.error(error);
+            addTerminalLog(`Connect failed: ${getErrorMessage(error)}`);
         } finally {
             isConnecting.current = false;
+            setIsConnectingUi(false);
         }
     };
 
-    const handleAiCommand = async (e) => {
-        e.preventDefault();
+    const disconnectWallet = () => {
+        setAccount(null);
+        setBalance('0');
+        setTasks([]);
+        setMissionProposal(null);
+        setConnectedWalletName('Not connected');
+        providerRef.current = null;
+        contractRef.current = null;
+        addTerminalLog('Wallet disconnected from app session.');
+    };
+
+    const requestAction = async (actionName, rewardEth) => {
+        if (!account || !contractRef.current) {
+            throw new Error('Connect wallet first.');
+        }
+        if (!isOnBaseSepolia) {
+            throw new Error('Switch wallet network to Base Sepolia first.');
+        }
+
+        const rewardValue = ethers.parseEther(rewardEth);
+        const walletBalance = await providerRef.current.getBalance(account);
+        const estimatedGas = await contractRef.current.requestAction.estimateGas(actionName, {
+            value: rewardValue
+        }).catch(() => 220000n);
+        const feeData = await providerRef.current.getFeeData();
+        const gasPrice = feeData.maxFeePerGas || feeData.gasPrice || FALLBACK_GAS_PRICE;
+        const estimatedTotalCost = rewardValue + (estimatedGas * gasPrice);
+
+        if (walletBalance < estimatedTotalCost) {
+            const needed = ethers.formatEther(estimatedTotalCost);
+            const current = ethers.formatEther(walletBalance);
+            throw new Error(`Insufficient Base Sepolia ETH. Need about ${needed} ETH (reward + gas), current ${current} ETH.`);
+        }
+
+        const tx = await contractRef.current.requestAction(actionName, {
+            value: rewardValue
+        });
+
+        addTerminalLog(`Transaction submitted: ${tx.hash.slice(0, 10)}...`);
+        await tx.wait();
+        addTerminalLog(`Action request confirmed: ${actionName}`);
+        await loadTasks();
+
+        return tx.hash;
+    };
+
+    const handleAiCommand = async (event) => {
+        event.preventDefault();
         if (!aiPrompt || !account) return;
+
         setIsAiThinking(true);
-        addTerminalLog(`CMD >> "${aiPrompt}"`);
+        addTerminalLog(`AI prompt: "${aiPrompt}"`);
+
         try {
             const result = await interpretAction(aiPrompt);
-            addTerminalLog(`AI >> Decision: ${result.action.toUpperCase()}`);
+            addTerminalLog(`AI suggestion: ${result.action.toUpperCase()}`);
             setMissionProposal({
                 action: result.action.toUpperCase(),
                 reason: result.reason,
-                reward: result.action.toLowerCase() === 'scan' ? '0.0001' : '0.0002',
+                reward: result.action.toLowerCase() === 'scan' ? '0.0001' : '0.0002'
             });
         } catch (error) {
-            addTerminalLog("ERR // AI LAG");
+            addTerminalLog(`AI error: ${getErrorMessage(error)}`);
+        } finally {
+            setIsAiThinking(false);
+            setAiPrompt('');
         }
-        setIsAiThinking(false);
-        setAiPrompt('');
     };
 
     const executeMission = async () => {
-        if (!missionProposal || !contractRef.current) return;
-        const { action, reward } = missionProposal;
-        addTerminalLog("TX >> Broadcasting...");
+        if (!missionProposal) return;
         try {
-            const tx = await contractRef.current.requestAction(action, { value: ethers.parseEther(reward) });
+            await requestAction(missionProposal.action, missionProposal.reward);
             setMissionProposal(null);
-            await tx.wait();
-            addTerminalLog("TX // Confirmed.");
-            loadTasks();
         } catch (error) {
-            addTerminalLog("TX // Aborted.");
+            addTerminalLog(`Action failed: ${getErrorMessage(error)}`);
         }
     };
-
-    if (!isInitialized) return null;
 
     return (
         <div className="app-wrapper">
             <header>
-                <div className="testnet-banner">
-                    BASE SEPOLIA TESTNET // NO REAL ASSETS // v1.0.2
-                </div>
+                <div className="testnet-banner">BASE SEPOLIA TESTNET</div>
                 <div className="logo-container">
                     <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
                         <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="6" />
                     </svg>
                     <div>
                         <h1>BOT-CALL</h1>
-                        <p style={{ fontSize: '0.6rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>Robotic Infrastructure Protocol</p>
+                        <p style={{ fontSize: '0.65rem', color: 'var(--text-dim)', textTransform: 'uppercase' }}>
+                            Pay-per-action robotics protocol
+                        </p>
                     </div>
                 </div>
-                {!account ? (
-                    <button className="connect-btn" onClick={() => providers.length > 1 ? setShowWalletModal(true) : connectWallet()}>Connect Wallet</button>
-                ) : (
-                    <div className="account-info glass">
-                        <code>{account.slice(0, 6)}...{account.slice(-4)}</code>
-                        <span style={{ margin: '0 10px' }}>|</span>
-                        <SmoothBalance value={balance} />
-                    </div>
-                )}
+
+                <div className="header-actions">
+                    {!account ? (
+                        <button className="connect-btn" onClick={() => setShowWalletModal(true)} disabled={isConnectingUi}>
+                            {isConnectingUi ? 'Connecting...' : 'Connect Wallet'}
+                        </button>
+                    ) : (
+                        <>
+                            <div className="account-info glass">
+                                <code>{shortenAddress(account)}</code>
+                                <span style={{ margin: '0 10px' }}>|</span>
+                                <SmoothBalance value={balance} />
+                            </div>
+                            <button className="connect-btn secondary-btn" onClick={() => setShowWalletModal(true)}>
+                                Switch Wallet
+                            </button>
+                            <button className="connect-btn disconnect-btn" onClick={disconnectWallet}>
+                                Disconnect
+                            </button>
+                        </>
+                    )}
+                </div>
             </header>
+
             <main>
                 <section className="hero">
                     <h2>Robotic Control Node</h2>
-                    <p>Professional interface for decentralized robotic task execution.</p>
+                    <p>
+                        Connected Wallet: {connectedWalletName} | Network: <span className={isOnBaseSepolia ? 'status-ok' : 'status-warn'}>{networkLabel}</span>
+                    </p>
                 </section>
+
                 <div className="dashboard-grid">
                     <div className="left-col">
                         <section className="ai-agent-card glass">
                             <h3>Command Interface</h3>
                             <form className="ai-form" onSubmit={handleAiCommand}>
-                                <input type="text" placeholder="Enter robot command..." value={aiPrompt} onChange={e => setAiPrompt(e.target.value)} disabled={isAiThinking} />
-                                <button className="connect-btn" disabled={isAiThinking || !account}>Send</button>
+                                <input
+                                    type="text"
+                                    placeholder="Describe the robot action"
+                                    value={aiPrompt}
+                                    onChange={(e) => setAiPrompt(e.target.value)}
+                                    disabled={isAiThinking}
+                                />
+                                <button className="connect-btn" disabled={isAiThinking || !account}>
+                                    {isAiThinking ? 'Thinking...' : 'Analyze'}
+                                </button>
                             </form>
                         </section>
+
                         <div className="action-grid">
-                            <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
-                            <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!account} onActionInitiated={loadTasks} />
-                        </div>
-                        </div>
-                        <div className="right-col">
-                            <section className="robot-terminal glass">
-                                <div className="terminal-body">
-                                    {terminal.map((log, i) => <div key={i}>{log}</div>)}
-                                </div>
-                            </section>
-                            <RobotVisualizer status={tasks.length > 0 ? tasks[0].status : 0} action={tasks.length > 0 ? tasks[0].action : 'idle'} />
+                            <RobotActionButton
+                                actionName="SCAN"
+                                rewardEth="0.0001"
+                                disabled={!account || !isOnBaseSepolia}
+                                onActionInitiated={loadTasks}
+                                onRequestAction={requestAction}
+                            />
+                            <RobotActionButton
+                                actionName="MOVE"
+                                rewardEth="0.0002"
+                                disabled={!account || !isOnBaseSepolia}
+                                onActionInitiated={loadTasks}
+                                onRequestAction={requestAction}
+                            />
                         </div>
                     </div>
 
-                    {missionProposal && (
-                        <section className="mission-proposal glass">
-                            <h3>MISSION PROPOSAL</h3>
-                            <p><strong>Action:</strong> {missionProposal.action}</p>
-                            <p><i>{missionProposal.reason}</i></p>
-                            <button className="connect-btn" onClick={executeMission}>Authorize</button>
+                    <div className="right-col">
+                        <section className="robot-terminal glass">
+                            <div className="terminal-body">
+                                {terminal.map((log, index) => <div key={`${log}-${index}`}>{log}</div>)}
+                            </div>
                         </section>
-                    )}
+                        <RobotVisualizer status={tasks.length > 0 ? tasks[0].status : 0} action={tasks.length > 0 ? tasks[0].action : 'idle'} />
+                    </div>
+                </div>
 
-                    <section className="task-history">
-                        <h3>MISSION LEDGER</h3>
-                        <div className="task-list">
-                            {tasks.map(task => (
-                                <div key={task.id} className="task-card glass">
-                                    <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
-                                    <span>{ethers.formatEther(task.reward)} ETH</span>
-                                </div>
+                {missionProposal && (
+                    <section className="mission-proposal glass">
+                        <h3>Mission Proposal</h3>
+                        <p><strong>Action:</strong> {missionProposal.action}</p>
+                        <p>{missionProposal.reason}</p>
+                        <button className="connect-btn" onClick={executeMission}>Submit Action</button>
+                    </section>
+                )}
+
+                <section className="task-history">
+                    <h3>Task Ledger</h3>
+                    <div className="task-list">
+                        {tasks.map((task) => (
+                            <div key={task.id} className="task-card glass">
+                                <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
+                                <span>{ethers.formatEther(task.reward)} ETH</span>
+                            </div>
+                        ))}
+                    </div>
+                </section>
+            </main>
+
+            {showWalletModal && (
+                <div className="wallet-modal-overlay" onClick={() => setShowWalletModal(false)}>
+                    <div className="wallet-modal glass" onClick={(e) => e.stopPropagation()}>
+                        <h3>Select Wallet</h3>
+                        <p>
+                            Detected providers: {providers.length}. Rainbow is supported when the Rainbow provider/extension is installed in this browser.
+                        </p>
+
+                        <div className="wallet-provider-list">
+                            {providers.length === 0 ? (
+                                <div className="wallet-empty">No injected provider detected yet. Install a wallet extension or reload wallet extension context.</div>
+                            ) : (
+                                providers.map((entry, index) => (
+                                    <button
+                                        key={`${entry.info?.uuid || entry.info?.rdns || entry.info?.name || 'wallet'}-${index}`}
+                                        className="wallet-provider-btn"
+                                        onClick={() => connectWallet(entry)}
+                                        disabled={isConnectingUi}
+                                    >
+                                        {entry.info?.icon ? (
+                                            <img src={entry.info.icon} alt={entry.info?.name || 'wallet'} />
+                                        ) : (
+                                            <span className="wallet-fallback-icon">W</span>
+                                        )}
+                                        <span>{entry.info?.name || detectProviderName(entry.provider)}</span>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+
+                        <div className="wallet-link-grid">
+                            {WALLET_INSTALL_LINKS.map((wallet) => (
+                                <a key={wallet.name} className="wallet-link-item" href={wallet.url} target="_blank" rel="noreferrer">
+                                    {wallet.name}
+                                </a>
                             ))}
                         </div>
-                    </section>
-                </main>
 
-                {showWalletModal && (
-                    <div className="wallet-modal-overlay" onClick={() => setShowWalletModal(false)}>
-                        <div className="wallet-modal glass" onClick={(e) => e.stopPropagation()}>
-                            <h3>Select Wallet Provider</h3>
-                            <p>Detected wallets from this browser session.</p>
-
-                            <div className="wallet-provider-list">
-                                {providers.length === 0 ? (
-                                    <div className="wallet-empty">No providers detected. Refresh wallet extension and try again.</div>
-                                ) : (
-                                    providers.map((entry) => (
-                                        <button
-                                            key={entry.info?.uuid || entry.info?.rdns || entry.info?.name || 'wallet-provider'}
-                                            className="wallet-provider-btn"
-                                            onClick={() => connectWallet(entry)}
-                                        >
-                                            {entry.info?.icon ? (
-                                                <img src={entry.info.icon} alt={entry.info?.name || 'wallet'} />
-                                            ) : (
-                                                <span className="wallet-fallback-icon">W</span>
-                                            )}
-                                            <span>{entry.info?.name || 'Injected Wallet'}</span>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-
-                            <button className="connect-btn" onClick={() => setShowWalletModal(false)}>
-                                Close
-                            </button>
-                        </div>
+                        <button className="connect-btn" onClick={() => setShowWalletModal(false)}>Close</button>
                     </div>
-                )}
-            </div>
-            );
-            }
+                </div>
+            )}
+        </div>
+    );
+}
 
-            export default App;
+export default App;

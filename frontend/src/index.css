@@ -85,6 +85,13 @@ header {
 	flex-wrap: wrap;
 }
 
+.header-actions {
+	display: flex;
+	align-items: center;
+	gap: 0.6rem;
+	flex-wrap: wrap;
+}
+
 .logo-container {
 	display: flex;
 	align-items: center;
@@ -115,6 +122,18 @@ header {
 .connect-btn:hover:not(:disabled) {
 	transform: translateY(-2px);
 	box-shadow: 0 12px 26px rgba(0, 242, 255, 0.24);
+}
+
+.secondary-btn {
+	background: rgba(0, 242, 255, 0.14);
+	color: var(--text-main);
+	border: 1px solid rgba(0, 242, 255, 0.45);
+}
+
+.disconnect-btn {
+	background: rgba(255, 81, 81, 0.15);
+	color: #ffb5b5;
+	border: 1px solid rgba(255, 81, 81, 0.5);
 }
 
 .connect-btn:disabled {
@@ -154,6 +173,16 @@ main {
 	margin: 0.35rem 0 0;
 	color: var(--text-dim);
 	font-size: 0.88rem;
+}
+
+.status-ok {
+	color: var(--success);
+	font-weight: 600;
+}
+
+.status-warn {
+	color: #ffcf73;
+	font-weight: 600;
 }
 
 .dashboard-grid {
@@ -300,6 +329,24 @@ main {
 	margin-bottom: 0.85rem;
 }
 
+.wallet-link-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.45rem;
+	margin: 0 0 0.85rem;
+}
+
+.wallet-link-item {
+	text-decoration: none;
+	color: var(--text-main);
+	font-size: 0.78rem;
+	border: 1px solid rgba(158, 178, 201, 0.35);
+	border-radius: 10px;
+	padding: 0.5rem 0.65rem;
+	background: rgba(10, 18, 33, 0.78);
+	text-align: center;
+}
+
 .wallet-provider-btn {
 	border: 1px solid rgba(158, 178, 201, 0.35);
 	background: rgba(10, 18, 33, 0.9);
@@ -354,8 +401,20 @@ main {
 		width: 100%;
 	}
 
+	.header-actions {
+		width: 100%;
+	}
+
+	.header-actions .connect-btn {
+		flex: 1;
+	}
+
 	.ai-form {
 		flex-direction: column;
 		align-items: stretch;
+	}
+
+	.wallet-link-grid {
+		grid-template-columns: 1fr;
 	}
 }

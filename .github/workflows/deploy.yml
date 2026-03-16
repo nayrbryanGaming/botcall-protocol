@@ -1,4 +1,4 @@
-name: TITAN_PLATINUM_DEPLOYMENT
+name: deploy-and-validate
 
 on:
   push:
@@ -39,4 +39,4 @@ jobs:
         VITE_RPC_URL: ${{ secrets.VITE_RPC_URL }}
 
     - name: Deployment Status
-      run: echo "PLATINUM_MVP_BUILD_SUCCESSFUL_READY_FOR_VERCEL"
+      run: echo "Build and tests completed successfully"

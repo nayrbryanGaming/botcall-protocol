@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 const RobotVisualizer = ({ status, action }) => {
   const isExecuting = status === 1;
@@ -9,13 +8,13 @@ const RobotVisualizer = ({ status, action }) => {
   return (
     <div className="robot-visualizer glass" style={{ height: '260px', borderRadius: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000' }}>
       <div className="drone-container">
-        <motion.div animate={isExecuting ? { y: [0, -10, 0] } : {}} transition={{ repeat: Infinity, duration: 2 }}>
+        <div>
           <svg width="120" height="120" viewBox="0 0 100 100" fill="none">
             <path d="M30 50H70L80 58V65L70 73H30L20 65V58L30 50Z" stroke={robotColor} strokeWidth="2" />
             <circle cx="50" cy="62" r="5" stroke={robotColor} strokeWidth="1" />
-            {isExecuting && <motion.circle cx="50" cy="62" r="2" fill="var(--error)" animate={{ opacity: [1, 0, 1] }} transition={{ repeat: Infinity, duration: 0.5 }} />}
+            {isExecuting && <circle cx="50" cy="62" r="2" fill="var(--error)" />}
           </svg>
-        </motion.div>
+        </div>
       </div>
       <div style={{ position: 'absolute', bottom: '10px', fontSize: '0.7rem', color: robotColor, fontWeight: 'bold' }}>
         {isExecuting ? `EXECUTING: ${action.toUpperCase()}` : isCompleted ? "TASK_COMPLETED" : "IDLE_STANDBY"}

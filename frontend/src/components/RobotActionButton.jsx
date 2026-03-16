@@ -2,14 +2,37 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS } from '../config';
 
-const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated }) => {
+const formatRequestError = (error) => {
+    const raw = error?.shortMessage || error?.reason || error?.info?.error?.message || error?.message || 'Unknown error';
+    const msg = String(raw);
+    const lower = msg.toLowerCase();
+
+    if (lower.includes('insufficient funds')) {
+        return 'Insufficient Base Sepolia ETH for reward and gas.';
+    }
+    if (lower.includes('user rejected') || lower.includes('user denied')) {
+        return 'Transaction was rejected in wallet.';
+    }
+    return msg.length > 180 ? `${msg.slice(0, 180)}...` : msg;
+};
+
+const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated, onRequestAction }) => {
     const [loading, setLoading] = useState(false);
 
     const handleRequest = async () => {
-        if (!window.ethereum) return alert("Neural Link required: Please install a secure Web3 wallet provider (e.g. Rabby, Coinbase, etc.) to interface with the protocol.");
-
         setLoading(true);
         try {
+            if (onRequestAction) {
+                const hash = await onRequestAction(actionName, rewardEth);
+                if (onActionInitiated) onActionInitiated(hash);
+                return;
+            }
+
+            if (!window.ethereum) {
+                alert('No wallet detected. Please install or unlock a wallet extension.');
+                return;
+            }
+
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
             const contract = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
@@ -18,14 +41,13 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 value: ethers.parseEther(rewardEth)
             });
 
-            console.log("Transmission sent:", tx.hash);
             await tx.wait();
             if (onActionInitiated) onActionInitiated(tx.hash);
         } catch (error) {
-            console.error("Transmission failed:", error);
-            const reason = error.reason || error.message;
-            if (!reason.includes("user rejected")) {
-                alert(`MISSION INTERFACE ERROR: ${reason}`);
+            console.error('Action request failed:', error);
+            const reason = formatRequestError(error);
+            if (!String(reason).toLowerCase().includes('rejected in wallet')) {
+                alert(`Action request error: ${reason}`);
             }
         } finally {
             setLoading(false);
@@ -133,7 +155,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 maxWidth: '220px',
                 letterSpacing: '0.05em'
             }}>
-                ID: PROTO-PLATINUM // STATUS: MULTI-WALLET READY
+                STATUS: Wallet-connected action trigger
             </p>
             
             <div style={{ 
@@ -168,7 +190,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated 
                 disabled={loading || disabled}
                 onClick={handleRequest}
             >
-                {loading ? "DATA_LINK_ESTABLISHING..." : `EXECUTE ${actionName}`}
+                {loading ? 'Submitting transaction...' : `Execute ${actionName}`}
             </button>
         </div>
     );

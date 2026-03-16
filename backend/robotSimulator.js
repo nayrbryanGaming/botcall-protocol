@@ -58,7 +58,7 @@ async function executeAction(action) {
             return { battery: Math.floor(Math.random() * 20) + 40, sensors: "OK", log: "Area clear. No anomalies detected." };
 
         case "sync":
-            console.log("[ROBOT] Synchronizing with neural hub...");
+            console.log('[ROBOT] Synchronizing task data...');
             await sleep(1000);
             await drawProgressBar(2000, "SYNCING DATA");
             return { battery: Math.floor(Math.random() * 10) + 90, sensors: "OK", log: "Synchronization completed." };

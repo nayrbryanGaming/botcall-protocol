@@ -9,7 +9,7 @@ if (GROQ_API_KEY) {
         dangerouslyAllowBrowser: true // Required for frontend client-side usage
     });
 } else {
-    console.warn("GROQ_API_KEY missing. AI will use local heuristic fallback.");
+    console.warn("GROQ_API_KEY missing. Using local heuristic fallback.");
 }
 
 /**
@@ -18,16 +18,14 @@ if (GROQ_API_KEY) {
  */
 export const interpretAction = async (userPrompt) => {
     try {
-        if (!groq) throw new Error("AI Brain offline");
+        if (!groq) throw new Error('AI service unavailable');
 
         const completion = await groq.chat.completions.create({
             messages: [
                 {
                     role: "system",
-                    content: `You are the TITAN-CORE neural interface for the BOT-CALL protocol. 
-                    Interpret user intent and map to an action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
-                    Provide a one-sentence high-tech reasoning (professional, technical tone, NO EMOJIS).
-                    Return strictly JSON: { "action": "action_name", "reason": "reasoning" }`
+                    content: `Interpret user intent and map it to one action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
+                    Return strict JSON only: { "action": "action_name", "reason": "short reason" }`
                 },
                 {
                     role: "user",
@@ -52,15 +50,15 @@ export const interpretAction = async (userPrompt) => {
 
         return {
             action,
-            reason: data.reason || "Autonomous decisioning based on environment heuristics."
+            reason: data.reason || 'Action selected based on request context.'
         };
     } catch (error) {
-        console.error("AI Agent Error:", error);
+        console.error('AI Agent Error:', error);
 
         // Advanced Heuristic Fallback
         const prompt = userPrompt.toLowerCase();
         let action = "scan";
-        let reason = "Switching to autonomous heuristic mode due to neural lag.";
+        let reason = 'Using fallback action mapping.';
 
         if (prompt.includes("move") || prompt.includes("go") || prompt.includes("walk")) action = "move";
         else if (prompt.includes("pick") || prompt.includes("grab") || prompt.includes("get")) action = "pick object";
