@@ -25,6 +25,24 @@ const FALLBACK_GAS_PRICE = 1_500_000_000n;
 const TESTNET_TOKEN_SYMBOL = 'tETH';
 const UI_BUILD_ID = 'build-2e76b20';
 
+const COMMAND_CATALOG = [
+    { action: 'SCAN', rewardEth: '0.0001' },
+    { action: 'MOVE', rewardEth: '0.0002' },
+    { action: 'PICK', rewardEth: '0.0002' },
+    { action: 'PLACE', rewardEth: '0.0002' },
+    { action: 'ROTATE', rewardEth: '0.0002' },
+    { action: 'STOP', rewardEth: '0.0001' },
+    { action: 'INSPECT', rewardEth: '0.0002' },
+    { action: 'MAP', rewardEth: '0.0002' },
+    { action: 'RETURN', rewardEth: '0.0002' },
+    { action: 'DOCK', rewardEth: '0.0002' }
+];
+
+const COMMAND_REWARD_MAP = COMMAND_CATALOG.reduce((acc, item) => {
+    acc[item.action.toLowerCase()] = item.rewardEth;
+    return acc;
+}, {});
+
 const unwrapErrorMessage = (error) => {
     if (!error) return '';
 
@@ -416,9 +434,14 @@ function App() {
             throw new Error('Switch wallet network to Base Sepolia first.');
         }
 
+        const normalizedAction = String(actionName || '').trim().toUpperCase();
+        if (!normalizedAction) {
+            throw new Error('Action name is required.');
+        }
+
         const rewardValue = ethers.parseEther(rewardEth);
         const walletBalance = await providerRef.current.getBalance(account);
-        const estimatedGas = await contractRef.current.requestAction.estimateGas(actionName, {
+        const estimatedGas = await contractRef.current.requestAction.estimateGas(normalizedAction, {
             value: rewardValue
         }).catch(() => 220000n);
         const feeData = await providerRef.current.getFeeData();
@@ -431,13 +454,13 @@ function App() {
             throw new Error(`Insufficient Base Sepolia tETH (testnet). Need about ${needed} ${TESTNET_TOKEN_SYMBOL} (reward + gas), current ${current} ${TESTNET_TOKEN_SYMBOL}.`);
         }
 
-        const tx = await contractRef.current.requestAction(actionName, {
+        const tx = await contractRef.current.requestAction(normalizedAction, {
             value: rewardValue
         });
 
         addTerminalLog(`Transaction submitted: ${tx.hash.slice(0, 10)}...`);
         await tx.wait();
-        addTerminalLog(`Action request confirmed: ${actionName}`);
+        addTerminalLog(`Action request confirmed: ${normalizedAction}`);
         await loadTasks();
 
         return tx.hash;
@@ -453,10 +476,14 @@ function App() {
         try {
             const result = await interpretAction(aiPrompt);
             addTerminalLog(`AI suggestion: ${result.action.toUpperCase()}`);
+
+            const normalizedAction = String(result.action || 'scan').toLowerCase();
+            const rewardEth = COMMAND_REWARD_MAP[normalizedAction] || COMMAND_CATALOG[0].rewardEth;
+
             setMissionProposal({
-                action: result.action.toUpperCase(),
+                action: normalizedAction.toUpperCase(),
                 reason: result.reason,
-                reward: result.action.toLowerCase() === 'scan' ? '0.0001' : '0.0002'
+                reward: rewardEth
             });
         } catch (error) {
             addTerminalLog(`AI error: ${getErrorMessage(error)}`);
@@ -546,20 +573,16 @@ function App() {
                         </section>
 
                         <div className="action-grid">
-                            <RobotActionButton
-                                actionName="SCAN"
-                                rewardEth="0.0001"
-                                disabled={!account || !isOnBaseSepolia}
-                                onActionInitiated={loadTasks}
-                                onRequestAction={requestAction}
-                            />
-                            <RobotActionButton
-                                actionName="MOVE"
-                                rewardEth="0.0002"
-                                disabled={!account || !isOnBaseSepolia}
-                                onActionInitiated={loadTasks}
-                                onRequestAction={requestAction}
-                            />
+                            {COMMAND_CATALOG.map((item) => (
+                                <RobotActionButton
+                                    key={item.action}
+                                    actionName={item.action}
+                                    rewardEth={item.rewardEth}
+                                    disabled={!account || !isOnBaseSepolia}
+                                    onActionInitiated={loadTasks}
+                                    onRequestAction={requestAction}
+                                />
+                            ))}
                         </div>
                     </div>
 

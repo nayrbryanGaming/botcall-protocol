@@ -56,60 +56,78 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated,
         }
     };
 
-    const Icons = {
+    const icons = {
         SCAN: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <circle cx="12" cy="12" r="10" strokeOpacity="0.2" />
-                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.4" />
-                <g>
-                    <path d="M12 12l8-5" strokeWidth="2" stroke="var(--primary)">
-                       <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="3s" repeatCount="indefinite" />
-                    </path>
-                    <circle cx="12" cy="12" r="2" fill="var(--primary)" />
-                </g>
-                <circle cx="12" cy="12" r="6" strokeDasharray="2 4" opacity="0.3" />
+                <circle cx="12" cy="12" r="10" strokeOpacity="0.25" />
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2" opacity="0.35" />
+                <path d="M12 12l7-4" stroke="var(--primary)" strokeWidth="2">
+                    <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="3s" repeatCount="indefinite" />
+                </path>
+                <circle cx="12" cy="12" r="1.8" fill="var(--primary)" />
             </svg>
         ),
         MOVE: (
             <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M13 17l5-5-5-5M6 17l5-5-5-5" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M2 12h8" opacity="0.3" strokeWidth="1" />
-                <rect x="2" y="11" width="2" height="2" fill="currentColor" opacity="0.5" />
+                <path d="M2 12h8" opacity="0.35" strokeWidth="1" />
             </svg>
         ),
-        PICK_OBJECT: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M7 11V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v6" />
-                <path d="M4 11h16v8a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3v-8z" />
-                <path d="M9 15h6M12 11v8" opacity="0.4" />
-                <path d="M7 11l-2 4m12-4l2 4" opacity="0.6" />
+        PICK: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <rect x="8" y="8" width="8" height="8" rx="1.5" />
+                <path d="M12 4v3M12 17v3M4 12h3M17 12h3" opacity="0.5" />
+                <path d="M6 8l2 2M18 8l-2 2" opacity="0.6" />
             </svg>
         ),
-        PATROL: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                <path d="M9 11l2 2 4-4" strokeWidth="2" />
-                <circle cx="12" cy="11" r="5" strokeOpacity="0.2" />
+        PLACE: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M4 16h16" />
+                <rect x="8" y="6" width="8" height="8" rx="1.5" />
+                <path d="M10 19h4" opacity="0.5" />
             </svg>
         ),
-        RECHARGE: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <rect x="2" y="6" width="16" height="12" rx="2" strokeWidth="2" />
-                <path d="M22 10v4M6 12l2-3h-3l2-3" fill="var(--primary)" transform="translate(4, 5)" />
-                <path d="M18 9h1v6h-1" opacity="0.4" />
+        ROTATE: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M20 12a8 8 0 1 1-2.3-5.7" />
+                <path d="M20 4v6h-6" />
             </svg>
         ),
-        WAVE: (
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v5" />
-                <path d="M14 10V5a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v10" />
-                <path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8" />
-                <path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15" />
+        STOP: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <rect x="6" y="6" width="12" height="12" rx="2" />
+                <path d="M9 9h6v6H9z" fill="var(--primary)" fillOpacity="0.3" stroke="none" />
+            </svg>
+        ),
+        INSPECT: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <circle cx="11" cy="11" r="6" />
+                <path d="M20 20l-4-4" />
+                <path d="M11 8v6M8 11h6" opacity="0.55" />
+            </svg>
+        ),
+        MAP: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z" />
+                <path d="M9 4v14M15 6v14" opacity="0.55" />
+            </svg>
+        ),
+        RETURN: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                <path d="M9 17l-5-5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4 12h10a6 6 0 1 1 0 12" transform="translate(0,-6)" />
+            </svg>
+        ),
+        DOCK: (
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M3 16h18" />
+                <rect x="5" y="7" width="14" height="7" rx="2" />
+                <path d="M9 19h6" opacity="0.6" />
             </svg>
         )
     };
 
-    const Icon = Icons[actionName] || Icons.SCAN;
+    const Icon = icons[actionName] || icons.SCAN;
 
     return (
         <div 

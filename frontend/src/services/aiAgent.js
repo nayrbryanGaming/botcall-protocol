@@ -4,26 +4,25 @@ const normalizeAction = (value = '') => {
     const action = value.toLowerCase();
 
     if (action.includes('scan')) return 'scan';
-    if (action.includes('move') || action.includes('walk') || action.includes('go')) return 'move';
-    if (action.includes('pick') || action.includes('get') || action.includes('grab')) return 'pick object';
-    if (action.includes('patrol') || action.includes('guard') || action.includes('secure')) return 'patrol';
-    if (action.includes('charge') || action.includes('battery') || action.includes('power')) return 'recharge';
-    if (action.includes('wave') || action.includes('hello') || action.includes('greet')) return 'wave';
+    if (action.includes('move') || action.includes('walk') || action.includes('go') || action.includes('advance')) return 'move';
+    if (action.includes('pick') || action.includes('grab') || action.includes('collect') || action.includes('take')) return 'pick';
+    if (action.includes('place') || action.includes('drop') || action.includes('set')) return 'place';
+    if (action.includes('rotate') || action.includes('turn') || action.includes('pivot')) return 'rotate';
+    if (action.includes('stop') || action.includes('halt') || action.includes('pause')) return 'stop';
+    if (action.includes('inspect') || action.includes('check') || action.includes('diagnose')) return 'inspect';
+    if (action.includes('map') || action.includes('survey') || action.includes('layout')) return 'map';
+    if (action.includes('return') || action.includes('back') || action.includes('home')) return 'return';
+    if (action.includes('dock') || action.includes('park') || action.includes('station')) return 'dock';
     return 'scan';
 };
 
 const fallbackInterpretation = (userPrompt) => {
     const prompt = String(userPrompt || '').toLowerCase();
-    let reason = 'Using local action mapping.';
-
-    if (prompt.includes('clean') || prompt.includes('inspect') || prompt.includes('check')) {
-        reason = 'The request suggests an environment check first.';
-    } else if (prompt.includes('go') || prompt.includes('move')) {
-        reason = 'The request indicates movement to a target area.';
-    }
+    const selectedAction = normalizeAction(prompt);
+    const reason = 'Using local action mapping.';
 
     return {
-        action: normalizeAction(prompt),
+        action: selectedAction,
         reason
     };
 };
