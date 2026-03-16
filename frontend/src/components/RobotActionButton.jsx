@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { ethers } from 'ethers';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS } from '../config';
 
+const TESTNET_TOKEN_SYMBOL = 'tETH';
+
 const formatRequestError = (error) => {
     const raw = error?.shortMessage || error?.reason || error?.info?.error?.message || error?.message || 'Unknown error';
     const msg = String(raw);
     const lower = msg.toLowerCase();
 
     if (lower.includes('insufficient funds')) {
-        return 'Insufficient Base Sepolia ETH for reward and gas.';
+        return 'Insufficient Base Sepolia tETH (testnet) for reward and gas.';
     }
     if (lower.includes('user rejected') || lower.includes('user denied')) {
         return 'Transaction was rejected in wallet.';
@@ -172,7 +174,7 @@ const RobotActionButton = ({ actionName, rewardEth, disabled, onActionInitiated,
                 alignItems: 'center',
                 gap: '0.5rem'
             }}>
-                {rewardEth} <span style={{ fontSize: '0.8rem', opacity: 0.7, fontWeight: '600' }}>ETH</span>
+                {rewardEth} <span style={{ fontSize: '0.8rem', opacity: 0.7, fontWeight: '600' }}>{TESTNET_TOKEN_SYMBOL}</span>
             </div>
             
             <button

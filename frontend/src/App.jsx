@@ -22,6 +22,7 @@ const WALLET_INSTALL_LINKS = [
 ];
 
 const FALLBACK_GAS_PRICE = 1_500_000_000n;
+const TESTNET_TOKEN_SYMBOL = 'tETH';
 
 const unwrapErrorMessage = (error) => {
     if (!error) return '';
@@ -42,7 +43,7 @@ const normalizeErrorMessage = (message) => {
 
     const lower = message.toLowerCase();
     if (lower.includes('insufficient funds')) {
-        return 'Insufficient Base Sepolia ETH for reward and gas. Top up this wallet, then retry.';
+        return 'Insufficient Base Sepolia tETH (testnet) for reward and gas. Top up this wallet, then retry.';
     }
     if (lower.includes('user rejected') || lower.includes('user denied')) {
         return 'Transaction was rejected in wallet.';
@@ -86,7 +87,7 @@ function SmoothBalance({ value }) {
 
     return (
         <span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '130px', display: 'inline-block' }}>
-            {display} ETH
+            {display} {TESTNET_TOKEN_SYMBOL}
         </span>
     );
 }
@@ -425,7 +426,7 @@ function App() {
         if (walletBalance < estimatedTotalCost) {
             const needed = ethers.formatEther(estimatedTotalCost);
             const current = ethers.formatEther(walletBalance);
-            throw new Error(`Insufficient Base Sepolia ETH. Need about ${needed} ETH (reward + gas), current ${current} ETH.`);
+            throw new Error(`Insufficient Base Sepolia tETH (testnet). Need about ${needed} ${TESTNET_TOKEN_SYMBOL} (reward + gas), current ${current} ${TESTNET_TOKEN_SYMBOL}.`);
         }
 
         const tx = await contractRef.current.requestAction(actionName, {
@@ -476,7 +477,7 @@ function App() {
     return (
         <div className="app-wrapper">
             <header>
-                <div className="testnet-banner">BASE SEPOLIA TESTNET</div>
+                <div className="testnet-banner">BASE SEPOLIA TESTNET (tETH ONLY)</div>
                 <div className="logo-container">
                     <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
                         <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="6" />
@@ -517,6 +518,9 @@ function App() {
                     <h2>Robotic Control Node</h2>
                     <p>
                         Connected Wallet: {connectedWalletName} | Network: <span className={isOnBaseSepolia ? 'status-ok' : 'status-warn'}>{networkLabel}</span>
+                    </p>
+                    <p style={{ marginTop: '0.35rem' }}>
+                        Payments and gas use Base Sepolia {TESTNET_TOKEN_SYMBOL} (testnet), not mainnet ETH.
                     </p>
                 </section>
 
@@ -581,7 +585,7 @@ function App() {
                         {tasks.map((task) => (
                             <div key={task.id} className="task-card glass">
                                 <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
-                                <span>{ethers.formatEther(task.reward)} ETH</span>
+                                <span>{ethers.formatEther(task.reward)} {TESTNET_TOKEN_SYMBOL}</span>
                             </div>
                         ))}
                     </div>
