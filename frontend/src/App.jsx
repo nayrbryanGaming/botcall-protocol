@@ -226,6 +226,9 @@ function App() {
     return (
         <div className="app-wrapper">
             <header>
+                <div className="testnet-banner">
+                    BASE SEPOLIA TESTNET // NO REAL ASSETS // v1.0.2
+                </div>
                 <div className="logo-container">
                     <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
                         <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="6" />

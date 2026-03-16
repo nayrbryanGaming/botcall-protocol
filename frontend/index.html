@@ -3,13 +3,19 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // STABLE VERSION GATE v1.0.1
-      const CURRENT_VERSION = '1.0.1';
+      // STABLE VERSION GATE v1.0.2
+      const CURRENT_VERSION = '1.0.2';
       if (localStorage.getItem('PROTOCOL_VERSION') !== CURRENT_VERSION) {
         localStorage.clear();
         sessionStorage.clear();
         localStorage.setItem('PROTOCOL_VERSION', CURRENT_VERSION);
-        window.location.reload(); // Force hard reset for cache bust
+        // Clean cache storage if possible
+        if ('caches' in window) {
+          caches.keys().then(names => {
+            for (let name of names) caches.delete(name);
+          });
+        }
+        window.location.reload(true); // Force real hard reload
       }
     </script>
     <style>
@@ -51,7 +57,10 @@
     <div id="boot-loader">
       <div class="loader-spin"></div>
       <h2 style="font-size: 1rem; color: #00f2ff; letter-spacing: 0.3rem;">INITIALIZING_STABLE_WORKSPACE</h2>
-      <p class="version-tag">BOT-CALL v1.0.1 // BASE SEPOLIA TESTNET</p>
+      <p class="version-tag">BOT-CALL v1.0.2 // BASE SEPOLIA TESTNET</p>
+      <div style="background: rgba(255,0,0,0.1); border: 1px solid rgba(255,0,0,0.3); padding: 10px; margin-top: 20px; font-size: 10px; color: #ff4444; border-radius: 5px; width: 80%; max-width: 300px;">
+        LEGAL: SYSTEM CONFIGURED FOR BASE SEPOLIA TESTNET ONLY. NO REAL VALUE ASSETS PERMITTED.
+      </div>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
