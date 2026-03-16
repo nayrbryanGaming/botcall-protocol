@@ -91,10 +91,22 @@ function App() {
             setIsInitialized(true);
             return;
         }
+
+        const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error('TIMEOUT')), ms));
+
         try {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            // NUCLEAR TIMEOUT: Don't let the wallet hang the entire boot process
+            const accounts = await Promise.race([
+                window.ethereum.request({ method: 'eth_accounts' }),
+                timeout(2000)
+            ]);
+
             if (accounts && accounts.length > 0) {
-                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                const chainId = await Promise.race([
+                    window.ethereum.request({ method: 'eth_chainId' }),
+                    timeout(1000)
+                ]);
+
                 if (chainId === '0x14a34') {
                     const addr = accounts[0];
                     setAccount(addr);
@@ -103,13 +115,13 @@ function App() {
                     const signer = await providerRef.current.getSigner();
                     contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
                     
-                    const bal = await providerRef.current.getBalance(addr);
+                    const bal = await providerRef.current.getBalance(addr).catch(() => '0');
                     setBalance(ethers.formatEther(bal));
                     loadTasks();
                 }
             }
         } catch (e) {
-            console.error("Sync failed", e);
+            console.error("ULTRA_SYNC_FAILURE:", e);
         } finally {
             // GUARANTEED INITIALIZATION
             setIsInitialized(true);
