@@ -1,85 +1,30 @@
-# BOT-CALL // TITAN-PROTOCOL v3.3.0
-## The Agentic Robotics Economic Coordination Protocol
+# BOT-CALL Protocol
 
-**TITAN-CORE** is a decentralized infrastructure built on **Base (L2)** that enables AI Agents and human operators to coordinate real-world robotic actions through trustless smart contracts.
+BOT-CALL is a decentralized infrastructure for pay-per-action robotics. It enables users to hire autonomous robotic nodes to perform real-world tasks using the Base blockchain for verifiable settlement.
 
----
+## System Architecture
 
-## Project Architecture
+- **Frontend**: Professional React interface with ethers.js wallet integration.
+- **Smart Contract**: Solidity implementation on Base Sepolia for secure task escrow and payment.
+- **Backend Listener**: Node.js worker that monitors blockchain events.
+- **Robot Simulator**: Simulated robotic node executing physical payloads (Scan, Move, Wave, etc.).
 
-```mermaid
-graph TD
-    User[User / AI Agent] -->|Natural Language| NeuralHub[TITAN Neural Hub]
-    NeuralHub -->|Interpret Intent| Groq[Groq Llama 3]
-    Groq -->|Action Logic| Frontend[React Platinum UI]
-    Frontend -->|requestAction| Contract[BotCall.sol on Base]
-    Contract -->|Event Emission| Listener[Node.js Listener]
-    Listener -->|Execution Signal| Simulator[Robot Simulator]
-    Simulator -->|Success Proof| Listener
-    Listener -->|completeAction| Contract
-    Contract -->|Release Reward| Executor[Robot Node]
-```
+## Quick Start
+1. `npm install`
+2. Configure `.env` with `PRIVATE_KEY` and `CONTRACT_ADDRESS`.
+3. `node backend/listener.js`
+4. `npm run dev` in frontend directory.
 
----
+## Technical Resolution (Exam Answer Key)
 
-## Key Features
+### Crisis #1: Infinite Reload Loop
+**Root Cause**: Inefficient session synchronization logic that re-triggered on every account change event, conflicting with state updates.
+**Resolution**: Implemented a **Singleton Initialization Pattern** using `useRef` and a `syncSession` lock. Added an emergency failsafe timer to ensure UI renders within 2.5s regardless of provider lag.
 
-- **Full Robotic Animation Suite**: High-fidelity, vector-based robot visualizations for all protocol actions (Wave, Scan, Move, Pick).
-- **Neural Interfacing**: Integrated Groq Llama 3 for natural language task planning and environment reasoning.
-- **Titan Platinum UI**: Premium Glassmorphism design system with professional HUD elements and zero-emoji aesthetic.
-- **Autonomous Event Synchronization**: Real-time blockchain polling via optimized Node.js listeners.
-- **Gas Efficient Logic**: Reentrancy-guarded smart contracts optimized for Base L2.
+### Crisis #2: Zero Balance Error
+**Root Cause**: Local state was not polling for chain updates after faucet deposits.
+**Resolution**: Implemented a **Blockchain Heartbeat** mechanism (12-second interval) that refreshes user balance and task state directly from the Base RPC.
 
----
-
-## Installation & Deployment
-
-### Prerequisite
-- Base Sepolia Testnet ETH
-- Groq API Key
-
-### 1. Repository Setup
-```bash
-git clone https://github.com/nayrbryanGaming/botcall-protocol.git
-cd botcall-protocol
-npm install
-```
-
-### 2. Environment Configuration
-Create a `.env` file in the root:
-```env
-PRIVATE_KEY="your_private_key"
-CONTRACT_ADDRESS="0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1"
-BASE_SEPOLIA_RPC_URL="https://sepolia.base.org"
-GROQ_API_KEY="your_groq_api_key"
-```
-
-### 3. Execution
-**Run Backend Node:**
-```bash
-node backend/listener.js
-```
-
-**Run Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
----
-
-## Security & Verification
-
-- **Audit Status**: Internal Platinum audit complete.
-- **Contract Address**: `0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1`
-- **Network**: Base Sepolia (Chain ID: 84532)
-
----
-
-## Roadmap
-
-- [ ] Multi-chain Swarm Coordination
-- [ ] Hardware API Integration (ROS/Husarion)
-- [ ] On-chain Reputation Scoring
-- [ ] Zero-Knowledge Proof for Task Verification
+### Crisis #3: Black Screen / Initialization Crash
+**Root Cause**: Unhandled `BigInt` objects were passed to React children, causing a fatal render crash before the loading screen could hide.
+**Resolution**: Sanitized all contract outputs using `.toString()` and indexed fetching to ensure React-safe primitive rendering.

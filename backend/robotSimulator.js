@@ -57,6 +57,12 @@ async function executeAction(action) {
             await drawProgressBar(6000, "SECURITY PATROL");
             return { battery: Math.floor(Math.random() * 20) + 40, sensors: "OK", log: "Area clear. No anomalies detected." };
 
+        case "sync":
+            console.log("[ROBOT] Synchronizing with neural hub...");
+            await sleep(1000);
+            await drawProgressBar(2000, "SYNCING DATA");
+            return { battery: Math.floor(Math.random() * 10) + 90, sensors: "OK", log: "Synchronization completed." };
+
         case "wave":
             console.log("[ROBOT] Activating end-effector greeting subroutines...");
             await sleep(1000);

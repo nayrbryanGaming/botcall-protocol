@@ -3,28 +3,21 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // ULTRA-NUCLEAR VERSION GATE v5.5.5
-      const CURRENT_VERSION = '5.5.5';
+      // STABLE VERSION GATE v4.9.8
+      const CURRENT_VERSION = '4.9.8';
       if (localStorage.getItem('PROTOCOL_VERSION') !== CURRENT_VERSION) {
-        console.log("NUCLEAR_GATE: Version mismatch detected. Purging all local artifacts...");
         localStorage.clear();
         sessionStorage.clear();
         localStorage.setItem('PROTOCOL_VERSION', CURRENT_VERSION);
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistrations().then(regs => {
-            for(let reg of regs) reg.unregister();
-          });
-        }
-        window.location.reload(true);
       }
     </script>
     <style>
-      /* ULTRA-NUCLEAR BOOT LOADER - VISIBLE BY DEFAULT */
-      body { margin: 0; background: #000; overflow: hidden; color: #fff; font-family: sans-serif; }
+      /* FAILSAFE BOOT LOADER */
+      body { margin: 0; background: #050505; overflow: hidden; color: #fff; font-family: sans-serif; }
       #boot-loader {
         position: fixed;
         top: 0; left: 0; width: 100vw; height: 100vh;
-        background: #900; /* HIGH VISIBILITY RED TO PROVE v5.5.5 IS ACTIVE */
+        background: #050505;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -33,45 +26,32 @@
         text-align: center;
       }
       .loader-spin {
-        width: 100px; height: 100px;
-        border: 8px solid rgba(255, 255, 255, 0.1);
-        border-top: 8px solid #fff;
+        width: 60px; height: 60px;
+        border: 4px solid rgba(0, 242, 255, 0.1);
+        border-top: 4px solid #00f2ff;
         border-radius: 50%;
         animation: spin 1s linear infinite;
         margin-bottom: 20px;
+        box-shadow: 0 0 20px rgba(0, 242, 255, 0.2);
       }
       @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-      .nuclear-btn {
-        background: #fff;
-        color: #900;
-        border: none;
-        padding: 20px 40px;
-        font-weight: 900;
-        cursor: pointer;
-        margin-top: 30px;
-        text-transform: uppercase;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+      .version-tag {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        margin-top: 2rem;
+        letter-spacing: 0.2rem;
       }
     </style>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>BOT-CALL | NUCLEAR v5.5.5</title>
+    <title>BOT-CALL | ROBOTIC ECOSYSTEM</title>
   </head>
   <body>
-    <!-- ULTIMATE BOOT LOADER -->
     <div id="boot-loader">
       <div class="loader-spin"></div>
-      <h1 style="font-size: 3rem; margin: 0;">BUILD v5.5.5 ACTIVE</h1>
-      <p style="margin: 10px 0; font-weight: bold; color: #ffcc00;">STABILITY_ENFORCED // CACHE_PURGED</p>
-      
-      <div style="max-width: 500px; background: rgba(0,0,0,0.5); padding: 30px; margin-top: 20px;">
-        <p><strong>PERHATIAN DOSEN:</strong> Jika layar ini (MERAH) tidak hilang, browser Anda macet.</p>
-        <p>Gunakan <strong>CTRL + SHIFT + R</strong> sekarang juga.</p>
-        <button class="nuclear-btn" onclick="location.reload(true)">FORCE NUCLEAR RELOAD</button>
-      </div>
-      <p style="margin-top: 20px; font-size: 0.8rem; opacity: 0.5;">BOT-CALL PROTOCOL // MISSION_CRITICAL_v5.5.5</p>
+      <h2 style="font-size: 1rem; color: #00f2ff; letter-spacing: 0.3rem;">INITIALIZING_WORKSPACE</h2>
+      <p class="version-tag">BOT-CALL v1.0.0</p>
     </div>
-
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

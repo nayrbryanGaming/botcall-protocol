@@ -149,7 +149,7 @@ async function checkAndRegister() {
         const info = await botCallContract.robots(wallet.address);
         if (!info.isRegistered) {
             process.stdout.write("[AUTH] Registering robotic node... ");
-            await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_PLATINUM_NODE_V3"]);
+            await sendTxWithRetry(botCallContract.registerRobot, ["BOT-CALL_NODE_V1"]);
             console.log("REGISTERED [OK]");
         } else {
             console.log(`VALIDATED [OK] | Missions Completed: ${info.tasksCompleted}`);
@@ -161,7 +161,7 @@ async function checkAndRegister() {
 }
 
 async function start() {
-    console.log("\n[SYSTEM] TITAN-PROTOCOL BACKEND // PLATINUM EDITION");
+    console.log("\n[SYSTEM] BOT-CALL BACKEND // ENTERPRISE EDITION");
     console.log("=========================================");
     console.log(`RPC:      ${RPC_URL}`);
     console.log(`CONTRACT: ${CONTRACT_ADDRESS}`);

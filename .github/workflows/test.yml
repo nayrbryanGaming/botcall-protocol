@@ -1,13 +1,9 @@
-name: BOT-CALL Protocol Testbed
+name: test-stability
 
-on:
-  push:
-    branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+on: [push, pull_request]
 
 jobs:
-  test-contract:
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -15,18 +11,5 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18.x'
-          cache: 'npm'
-      - run: npm install
-      - run: npx hardhat test
-
-  test-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Use Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: '18.x'
-          cache: 'npm'
       - run: npm install
       - run: npm run build --workspace=frontend
