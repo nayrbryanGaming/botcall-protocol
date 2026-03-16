@@ -158,7 +158,7 @@ function App() {
         const hb = setInterval(() => {
             if (providerRef.current) {
                 loadTasks();
-                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b))).catch(() => {});
+                providerRef.current.getBalance(account).then(b => setBalance(ethers.formatEther(b))).catch(() => { });
             }
         }, 12000);
         return () => clearInterval(hb);
@@ -167,9 +167,9 @@ function App() {
     const connectWallet = async (selectedProvider = null) => {
         if (isConnecting.current) return;
         isConnecting.current = true;
-        
+
         const injected = selectedProvider?.provider || window.ethereum;
-        
+
         if (!injected) {
             addTerminalLog("ERR // NO_PROVIDER_FOUND");
             isConnecting.current = false;
@@ -180,7 +180,7 @@ function App() {
             addTerminalLog("AUTH // Initializing secure link...");
             const accounts = await injected.request({ method: 'eth_requestAccounts' });
             let chainId = await injected.request({ method: 'eth_chainId' });
-            
+
             if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
                 try {
                     await injected.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }] });
@@ -202,12 +202,12 @@ function App() {
                     }
                 }
             }
-            
+
             setAccount(accounts[0]);
             providerRef.current = new ethers.BrowserProvider(injected);
             const signer = await providerRef.current.getSigner();
             contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-            addTerminalLog(`CONNECTED // NODE: ${accounts[0].slice(0,6)}`);
+            addTerminalLog(`CONNECTED // NODE: ${accounts[0].slice(0, 6)}`);
             setShowWalletModal(false);
             loadTasks();
         } catch (error) {
@@ -298,38 +298,3 @@ function App() {
                             <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
                             <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!account} onActionInitiated={loadTasks} />
                         </div>
-                    </div>
-                    <div className="right-col">
-                        <section className="robot-terminal glass">
-                            <div className="terminal-body">
-                                {terminal.map((log, i) => <div key={i}>{log}</div>)}
-                            </div>
-                        </section>
-                        <RobotVisualizer status={tasks.length > 0 ? tasks[0].status : 0} action={tasks.length > 0 ? tasks[0].action : 'idle'} />
-                    </div>
-                </div>
-                {missionProposal && (
-                    <section className="mission-proposal glass">
-                        <h3>MISSION PROPOSAL</h3>
-                        <p><strong>Action:</strong> {missionProposal.action}</p>
-                        <p><i>{missionProposal.reason}</i></p>
-                        <button className="connect-btn" onClick={executeMission}>Authorize</button>
-                    </section>
-                )}
-                <section className="task-history">
-                    <h3>MISSION LEDGER</h3>
-                    <div className="task-list">
-                        {tasks.map(task => (
-                            <div key={task.id} className="task-card glass">
-                                <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
-                                <span>{ethers.formatEther(task.reward)} ETH</span>
-                            </div>
-                        ))}
-                    </div>
-                </section>
-            </main>
-        </div>
-    );
-}
-
-export default App;

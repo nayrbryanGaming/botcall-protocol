@@ -12,7 +12,6 @@ export const BOT_CALL_ABI = [
     "function tasks(uint256) view returns (uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)",
     "function robots(address) view returns (bool isRegistered, string metadata, uint256 tasksCompleted)",
     "function taskCount() view returns (uint256)",
-    "function getLatestTasks(uint256 count) view returns (tuple(uint256 id, address requester, address assignedExecutor, string action, uint256 reward, uint8 status, uint256 timestamp)[])",
     "function registerRobot(string _metadata) external",
     "function startExecuting(uint256 _taskId) external",
     "function completeAction(uint256 _taskId) external",
