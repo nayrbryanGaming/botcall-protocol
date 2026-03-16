@@ -53,8 +53,8 @@ function App() {
 
     const [terminal, setTerminal] = useState([
         "SYSTEM_BOOT // INITIALIZED",
-        "AUTH_LINK // PENDING...",
-        "NETWORK // BASE_SEPOLIA"
+        "PROTOCOL // BOT-CALL v1.0.1",
+        "NETWORK // BASE_SEPOLIA_TESTNET_ONLY"
     ]);
 
     const addTerminalLog = (msg) => {

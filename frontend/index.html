@@ -3,12 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <script>
-      // STABLE VERSION GATE v4.9.8
-      const CURRENT_VERSION = '4.9.8';
+      // STABLE VERSION GATE v1.0.1
+      const CURRENT_VERSION = '1.0.1';
       if (localStorage.getItem('PROTOCOL_VERSION') !== CURRENT_VERSION) {
         localStorage.clear();
         sessionStorage.clear();
         localStorage.setItem('PROTOCOL_VERSION', CURRENT_VERSION);
+        window.location.reload(); // Force hard reset for cache bust
       }
     </script>
     <style>
@@ -49,8 +50,8 @@
   <body>
     <div id="boot-loader">
       <div class="loader-spin"></div>
-      <h2 style="font-size: 1rem; color: #00f2ff; letter-spacing: 0.3rem;">INITIALIZING_WORKSPACE</h2>
-      <p class="version-tag">BOT-CALL v1.0.0</p>
+      <h2 style="font-size: 1rem; color: #00f2ff; letter-spacing: 0.3rem;">INITIALIZING_STABLE_WORKSPACE</h2>
+      <p class="version-tag">BOT-CALL v1.0.1 // BASE SEPOLIA TESTNET</p>
     </div>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
