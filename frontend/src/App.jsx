@@ -75,21 +75,24 @@ function App() {
         return () => window.removeEventListener("eip6963:announceProvider", onAnnouncement);
     }, []);
 
-    const syncSession = async () => {
+    const syncSession = async (retryCount = 0) => {
         const hideLoader = () => {
             const loader = document.getElementById('boot-loader');
             if (loader) loader.style.display = 'none';
             document.body.style.overflow = 'auto';
         };
 
-        if (!window.ethereum || initializedRef.current) {
-            setIsInitialized(true);
-            hideLoader();
+        // If explicitly initialized, don't re-run
+        if (initializedRef.current) return;
+
+        // If no ethereum yet, retry up to 3 times (wallets can be slow)
+        if (!window.ethereum && retryCount < 3) {
+            setTimeout(() => syncSession(retryCount + 1), 500);
             return;
         }
 
         try {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' }).catch(() => []);
+            const accounts = await window.ethereum?.request({ method: 'eth_accounts' }).catch(() => []);
             if (accounts && accounts.length > 0) {
                 const chainId = await window.ethereum.request({ method: 'eth_chainId' }).catch(() => null);
                 if (chainId === BASE_SEPOLIA_CHAIN_ID) {
@@ -101,7 +104,7 @@ function App() {
                 }
             }
         } catch (e) {
-            console.warn("Soft startup fail:", e);
+            console.warn("Session sync bypass.");
         } finally {
             setIsInitialized(true);
             initializedRef.current = true;
@@ -164,23 +167,52 @@ function App() {
     const connectWallet = async (selectedProvider = null) => {
         if (isConnecting.current) return;
         isConnecting.current = true;
+        
         const injected = selectedProvider?.provider || window.ethereum;
+        
+        if (!injected) {
+            addTerminalLog("ERR // NO_PROVIDER_FOUND");
+            isConnecting.current = false;
+            return;
+        }
+
         try {
-            addTerminalLog("AUTH // Initializing connection...");
+            addTerminalLog("AUTH // Initializing secure link...");
             const accounts = await injected.request({ method: 'eth_requestAccounts' });
             let chainId = await injected.request({ method: 'eth_chainId' });
-            if (chainId !== '0x14a34') {
-                await injected.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x14a34' }] });
+            
+            if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+                try {
+                    await injected.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: BASE_SEPOLIA_CHAIN_ID }] });
+                } catch (switchError) {
+                    // This error code indicates that the chain has not been added to MetaMask.
+                    if (switchError.code === 4902) {
+                        await injected.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: BASE_SEPOLIA_CHAIN_ID,
+                                chainName: 'Base Sepolia',
+                                rpcUrls: ['https://sepolia.base.org'],
+                                nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+                                blockExplorerUrls: ['https://sepolia.basescan.org']
+                            }]
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
             }
+            
             setAccount(accounts[0]);
             providerRef.current = new ethers.BrowserProvider(injected);
             const signer = await providerRef.current.getSigner();
             contractRef.current = new ethers.Contract(CONTRACT_ADDRESS, BOT_CALL_ABI, signer);
-            addTerminalLog(`CONNECTED // Node Ready.`);
+            addTerminalLog(`CONNECTED // NODE: ${accounts[0].slice(0,6)}`);
             setShowWalletModal(false);
             loadTasks();
         } catch (error) {
-            addTerminalLog(`ERR // Connection failed.`);
+            addTerminalLog(`ERR // AUTH_FAILED`);
+            console.error(error);
         } finally {
             isConnecting.current = false;
         }
