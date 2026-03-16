@@ -9,6 +9,7 @@ import './index.css';
 
 function SmoothBalance({ value }) {
     const numericValue = parseFloat(value) || 0;
+    const [display, setDisplay] = useState("0.00000000");
     const springs = useSpring(numericValue, {
         mass: 0.8,
         stiffness: 75,
@@ -21,9 +22,14 @@ function SmoothBalance({ value }) {
         springs.set(numericValue);
     }, [numericValue, springs]);
 
+    useEffect(() => {
+        // Correct way to subscribe to motion value for text rendering
+        return displayValue.on("change", (latest) => setDisplay(latest));
+    }, [displayValue]);
+
     return (
         <motion.span style={{ fontWeight: 'bold', color: 'var(--primary)', minWidth: '130px', display: 'inline-block' }}>
-            {displayValue} ETH
+            {display} ETH
         </motion.span>
     );
 }
