@@ -23,7 +23,7 @@ const WALLET_INSTALL_LINKS = [
 
 const FALLBACK_GAS_PRICE = 1_500_000_000n;
 const TESTNET_TOKEN_SYMBOL = 'tETH';
-const UI_BUILD_ID = 'build-2e76b20';
+const UI_BUILD_ID = 'build-e124554';
 
 const COMMAND_CATALOG = [
     { action: 'SCAN', rewardEth: '0.0001' },
