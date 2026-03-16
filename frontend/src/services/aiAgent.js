@@ -1,16 +1,32 @@
-import Groq from "groq-sdk";
+const AI_ENDPOINT = import.meta.env.VITE_AI_AGENT_ENDPOINT || '';
 
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const normalizeAction = (value = '') => {
+    const action = value.toLowerCase();
 
-let groq = null;
-if (GROQ_API_KEY) {
-    groq = new Groq({
-        apiKey: GROQ_API_KEY,
-        dangerouslyAllowBrowser: true // Required for frontend client-side usage
-    });
-} else {
-    console.warn("GROQ_API_KEY missing. Using local heuristic fallback.");
-}
+    if (action.includes('scan')) return 'scan';
+    if (action.includes('move') || action.includes('walk') || action.includes('go')) return 'move';
+    if (action.includes('pick') || action.includes('get') || action.includes('grab')) return 'pick object';
+    if (action.includes('patrol') || action.includes('guard') || action.includes('secure')) return 'patrol';
+    if (action.includes('charge') || action.includes('battery') || action.includes('power')) return 'recharge';
+    if (action.includes('wave') || action.includes('hello') || action.includes('greet')) return 'wave';
+    return 'scan';
+};
+
+const fallbackInterpretation = (userPrompt) => {
+    const prompt = String(userPrompt || '').toLowerCase();
+    let reason = 'Using local action mapping.';
+
+    if (prompt.includes('clean') || prompt.includes('inspect') || prompt.includes('check')) {
+        reason = 'The request suggests an environment check first.';
+    } else if (prompt.includes('go') || prompt.includes('move')) {
+        reason = 'The request indicates movement to a target area.';
+    }
+
+    return {
+        action: normalizeAction(prompt),
+        reason
+    };
+};
 
 /**
  * AI Agent Service
@@ -18,54 +34,27 @@ if (GROQ_API_KEY) {
  */
 export const interpretAction = async (userPrompt) => {
     try {
-        if (!groq) throw new Error('AI service unavailable');
+        if (!AI_ENDPOINT) {
+            return fallbackInterpretation(userPrompt);
+        }
 
-        const completion = await groq.chat.completions.create({
-            messages: [
-                {
-                    role: "system",
-                    content: `Interpret user intent and map it to one action: 'scan', 'move', 'pick object', 'patrol', 'recharge', or 'wave'.
-                    Return strict JSON only: { "action": "action_name", "reason": "short reason" }`
-                },
-                {
-                    role: "user",
-                    content: userPrompt
-                }
-            ],
-            model: "llama3-70b-8192",
-            response_format: { type: "json_object" }
+        const response = await fetch(AI_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: userPrompt })
         });
 
-        const data = JSON.parse(completion.choices[0]?.message?.content || "{}");
-        let action = data.action?.toLowerCase() || "scan";
+        if (!response.ok) {
+            throw new Error(`AI endpoint returned ${response.status}`);
+        }
 
-        // Logic-based validation to ensure it matches supported contract actions
-        if (action.includes("scan")) action = "scan";
-        else if (action.includes("move") || action.includes("walk") || action.includes("go")) action = "move";
-        else if (action.includes("pick") || action.includes("get") || action.includes("grab")) action = "pick object";
-        else if (action.includes("patrol") || action.includes("guard") || action.includes("secure")) action = "patrol";
-        else if (action.includes("charge") || action.includes("battery") || action.includes("power")) action = "recharge";
-        else if (action.includes("wave") || action.includes("hello") || action.includes("greet")) action = "wave";
-        else action = "scan"; // Default to safest high-utility action
-
+        const data = await response.json();
         return {
-            action,
-            reason: data.reason || 'Action selected based on request context.'
+            action: normalizeAction(data?.action || userPrompt),
+            reason: data?.reason || 'Action selected by AI endpoint.'
         };
     } catch (error) {
         console.error('AI Agent Error:', error);
-
-        // Advanced Heuristic Fallback
-        const prompt = userPrompt.toLowerCase();
-        let action = "scan";
-        let reason = 'Using fallback action mapping.';
-
-        if (prompt.includes("move") || prompt.includes("go") || prompt.includes("walk")) action = "move";
-        else if (prompt.includes("pick") || prompt.includes("grab") || prompt.includes("get")) action = "pick object";
-        else if (prompt.includes("patrol") || prompt.includes("guard")) action = "patrol";
-        else if (prompt.includes("charge") || prompt.includes("power")) action = "recharge";
-        else if (prompt.includes("wave") || prompt.includes("hello")) action = "wave";
-
-        return { action, reason };
+        return fallbackInterpretation(userPrompt);
     }
 };
