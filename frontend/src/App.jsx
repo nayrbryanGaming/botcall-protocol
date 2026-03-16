@@ -23,6 +23,7 @@ const WALLET_INSTALL_LINKS = [
 
 const FALLBACK_GAS_PRICE = 1_500_000_000n;
 const TESTNET_TOKEN_SYMBOL = 'tETH';
+const UI_BUILD_ID = 'build-2e76b20';
 
 const unwrapErrorMessage = (error) => {
     if (!error) return '';
@@ -111,7 +112,8 @@ function App() {
 
     const [terminal, setTerminal] = useState([
         'System initialized',
-        'Target network: Base Sepolia'
+        'Target network: Base Sepolia',
+        `UI Build: ${UI_BUILD_ID}`
     ]);
 
     const isOnBaseSepolia = activeChainId === BASE_SEPOLIA_CHAIN_ID;
@@ -478,6 +480,7 @@ function App() {
         <div className="app-wrapper">
             <header>
                 <div className="testnet-banner">BASE SEPOLIA TESTNET (tETH ONLY)</div>
+                <div className="build-id-tag">Build ID: {UI_BUILD_ID}</div>
                 <div className="logo-container">
                     <svg width="40" height="40" viewBox="0 0 100 100" fill="none">
                         <path d="M20 30L50 10L80 30V70L50 90L20 70V30Z" stroke="var(--primary)" strokeWidth="6" />
@@ -520,7 +523,7 @@ function App() {
                         Connected Wallet: {connectedWalletName} | Network: <span className={isOnBaseSepolia ? 'status-ok' : 'status-warn'}>{networkLabel}</span>
                     </p>
                     <p style={{ marginTop: '0.35rem' }}>
-                        Payments and gas use Base Sepolia {TESTNET_TOKEN_SYMBOL} (testnet), not mainnet ETH.
+                        Payments and gas use Base Sepolia {TESTNET_TOKEN_SYMBOL} (testnet), not mainnet funds.
                     </p>
                 </section>
 

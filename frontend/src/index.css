@@ -77,6 +77,16 @@ body::before {
 	background: rgba(84, 20, 20, 0.34);
 }
 
+.build-id-tag {
+	font-size: 0.66rem;
+	letter-spacing: 0.08rem;
+	padding: 0.35rem 0.55rem;
+	border-radius: 9px;
+	color: rgba(239, 246, 255, 0.85);
+	border: 1px solid rgba(120, 148, 184, 0.35);
+	background: rgba(7, 16, 30, 0.78);
+}
+
 header {
 	display: flex;
 	align-items: center;
