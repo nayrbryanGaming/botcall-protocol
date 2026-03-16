@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { ethers } from 'ethers';
 import { motion, useSpring, useTransform } from 'framer-motion';
 import { BOT_CALL_ABI, CONTRACT_ADDRESS, BASE_SEPOLIA_CHAIN_ID } from './config';
@@ -298,3 +298,74 @@ function App() {
                             <RobotActionButton actionName="SCAN" rewardEth="0.0001" disabled={!account} onActionInitiated={loadTasks} />
                             <RobotActionButton actionName="MOVE" rewardEth="0.0002" disabled={!account} onActionInitiated={loadTasks} />
                         </div>
+                        </div>
+                        <div className="right-col">
+                            <section className="robot-terminal glass">
+                                <div className="terminal-body">
+                                    {terminal.map((log, i) => <div key={i}>{log}</div>)}
+                                </div>
+                            </section>
+                            <RobotVisualizer status={tasks.length > 0 ? tasks[0].status : 0} action={tasks.length > 0 ? tasks[0].action : 'idle'} />
+                        </div>
+                    </div>
+
+                    {missionProposal && (
+                        <section className="mission-proposal glass">
+                            <h3>MISSION PROPOSAL</h3>
+                            <p><strong>Action:</strong> {missionProposal.action}</p>
+                            <p><i>{missionProposal.reason}</i></p>
+                            <button className="connect-btn" onClick={executeMission}>Authorize</button>
+                        </section>
+                    )}
+
+                    <section className="task-history">
+                        <h3>MISSION LEDGER</h3>
+                        <div className="task-list">
+                            {tasks.map(task => (
+                                <div key={task.id} className="task-card glass">
+                                    <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
+                                    <span>{ethers.formatEther(task.reward)} ETH</span>
+                                </div>
+                            ))}
+                        </div>
+                    </section>
+                </main>
+
+                {showWalletModal && (
+                    <div className="wallet-modal-overlay" onClick={() => setShowWalletModal(false)}>
+                        <div className="wallet-modal glass" onClick={(e) => e.stopPropagation()}>
+                            <h3>Select Wallet Provider</h3>
+                            <p>Detected wallets from this browser session.</p>
+
+                            <div className="wallet-provider-list">
+                                {providers.length === 0 ? (
+                                    <div className="wallet-empty">No providers detected. Refresh wallet extension and try again.</div>
+                                ) : (
+                                    providers.map((entry) => (
+                                        <button
+                                            key={entry.info?.uuid || entry.info?.rdns || entry.info?.name || 'wallet-provider'}
+                                            className="wallet-provider-btn"
+                                            onClick={() => connectWallet(entry)}
+                                        >
+                                            {entry.info?.icon ? (
+                                                <img src={entry.info.icon} alt={entry.info?.name || 'wallet'} />
+                                            ) : (
+                                                <span className="wallet-fallback-icon">W</span>
+                                            )}
+                                            <span>{entry.info?.name || 'Injected Wallet'}</span>
+                                        </button>
+                                    ))
+                                )}
+                            </div>
+
+                            <button className="connect-btn" onClick={() => setShowWalletModal(false)}>
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                )}
+            </div>
+            );
+            }
+
+            export default App;
