@@ -69,7 +69,9 @@ const classifyPrompt = (value = '') => {
     if (!prompt) {
         return {
             action: DEFAULT_ACTION,
-            reason: 'Prompt is empty, defaulting to SCAN.'
+            reason: 'Prompt is empty, defaulting to SCAN.',
+            score: 0,
+            matchedKeywords: []
         };
     }
 
@@ -85,13 +87,17 @@ const classifyPrompt = (value = '') => {
         const matchedKeywords = winner.keywords.filter((keyword) => keywordMatched(prompt, keyword)).slice(0, 3);
         return {
             action: winner.action,
-            reason: `Mapped by local classifier (${matchedKeywords.join(', ') || winner.action}).`
+            reason: `Mapped by local classifier (${matchedKeywords.join(', ') || winner.action}).`,
+            score: winner.score,
+            matchedKeywords
         };
     }
 
     return {
         action: DEFAULT_ACTION,
-        reason: 'No strong keyword match, defaulting to SCAN.'
+        reason: 'No strong keyword match, defaulting to SCAN.',
+        score: 0,
+        matchedKeywords: []
     };
 };
 
@@ -104,9 +110,14 @@ const fallbackInterpretation = (userPrompt) => {
  * Interprets user intent to decide on the best robot action.
  */
 export const interpretAction = async (userPrompt) => {
+    const promptDecision = classifyPrompt(userPrompt);
+
     try {
         if (!AI_ENDPOINT) {
-            return fallbackInterpretation(userPrompt);
+            return {
+                ...promptDecision,
+                source: 'prompt'
+            };
         }
 
         const response = await fetch(AI_ENDPOINT, {
@@ -120,17 +131,31 @@ export const interpretAction = async (userPrompt) => {
         }
 
         const data = await response.json();
-        const mergedSignal = [data?.action, data?.reason, userPrompt]
+        const endpointSignal = [data?.action, data?.reason]
             .filter((item) => typeof item === 'string' && item.trim().length > 0)
             .join(' ');
-        const localDecision = classifyPrompt(mergedSignal || userPrompt);
+        const endpointDecision = classifyPrompt(endpointSignal);
+
+        const shouldTrustPrompt = promptDecision.score > 0;
+        const shouldTrustEndpoint = !shouldTrustPrompt && endpointDecision.score > 0;
+        const finalDecision = shouldTrustPrompt
+            ? promptDecision
+            : (shouldTrustEndpoint ? endpointDecision : promptDecision);
 
         return {
-            action: localDecision.action,
-            reason: data?.reason || localDecision.reason
+            action: finalDecision.action,
+            reason: shouldTrustPrompt
+                ? promptDecision.reason
+                : (data?.reason || finalDecision.reason),
+            score: finalDecision.score,
+            matchedKeywords: finalDecision.matchedKeywords,
+            source: shouldTrustPrompt ? 'prompt' : (shouldTrustEndpoint ? 'endpoint' : 'default')
         };
     } catch (error) {
         console.error('AI Agent Error:', error);
-        return fallbackInterpretation(userPrompt);
+        return {
+            ...fallbackInterpretation(userPrompt),
+            source: 'fallback'
+        };
     }
 };

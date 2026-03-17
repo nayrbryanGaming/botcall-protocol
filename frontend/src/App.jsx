@@ -23,7 +23,26 @@ const WALLET_INSTALL_LINKS = [
 
 const FALLBACK_GAS_PRICE = 1_500_000_000n;
 const TESTNET_TOKEN_SYMBOL = 'tETH';
-const UI_BUILD_ID = 'build-e124554';
+const UI_BUILD_ID = 'build-e124557';
+
+const normalizeChainId = (chainId) => {
+    if (chainId === null || chainId === undefined) return null;
+
+    if (typeof chainId === 'number' && Number.isFinite(chainId)) {
+        return `0x${chainId.toString(16)}`;
+    }
+
+    const normalized = String(chainId).trim().toLowerCase();
+    if (!normalized) return null;
+    if (normalized.startsWith('0x')) return normalized;
+
+    const numeric = Number.parseInt(normalized, 10);
+    if (Number.isFinite(numeric)) {
+        return `0x${numeric.toString(16)}`;
+    }
+
+    return normalized;
+};
 
 const COMMAND_CATALOG = [
     { action: 'SCAN', rewardEth: '0.0001' },
@@ -135,13 +154,17 @@ function App() {
         `UI Build: ${UI_BUILD_ID}`
     ]);
 
-    const isOnBaseSepolia = activeChainId === BASE_SEPOLIA_CHAIN_ID;
+    const normalizedActiveChainId = normalizeChainId(activeChainId);
+    const isOnBaseSepolia = normalizedActiveChainId === BASE_SEPOLIA_CHAIN_ID;
 
     const networkLabel = useMemo(() => {
-        if (!activeChainId) return 'No network detected';
-        if (activeChainId === BASE_SEPOLIA_CHAIN_ID) return 'Base Sepolia';
-        return `Wrong network (${activeChainId})`;
-    }, [activeChainId]);
+        if (!normalizedActiveChainId) return 'No network detected';
+        if (normalizedActiveChainId === BASE_SEPOLIA_CHAIN_ID) return 'Base Sepolia';
+
+        const decimalChainId = Number.parseInt(normalizedActiveChainId, 16);
+        const displayChainId = Number.isFinite(decimalChainId) ? decimalChainId : normalizedActiveChainId;
+        return `Wrong network (${displayChainId})`;
+    }, [normalizedActiveChainId]);
 
     const addTerminalLog = (msg) => {
         const timestamp = new Date().toLocaleTimeString([], { hour12: false });
@@ -330,9 +353,12 @@ function App() {
         };
 
         const handleChainChanged = async (chainId) => {
-            setActiveChainId(chainId);
-            if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
-                addTerminalLog(`Network changed: ${chainId} (switch back to Base Sepolia)`);
+            const normalizedChainId = normalizeChainId(chainId);
+            setActiveChainId(normalizedChainId);
+            if (normalizedChainId !== BASE_SEPOLIA_CHAIN_ID) {
+                const decimalChainId = Number.parseInt(normalizedChainId || '', 16);
+                const displayChainId = Number.isFinite(decimalChainId) ? decimalChainId : chainId;
+                addTerminalLog(`Network changed: ${displayChainId} (switch back to Base Sepolia)`);
                 return;
             }
 
@@ -361,7 +387,8 @@ function App() {
                 if (!fallbackProvider?.request) return;
 
                 const chainId = await fallbackProvider.request({ method: 'eth_chainId' }).catch(() => null);
-                if (!cancelled) setActiveChainId(chainId);
+                const normalizedChainId = normalizeChainId(chainId);
+                if (!cancelled) setActiveChainId(normalizedChainId);
 
                 const accounts = await fallbackProvider.request({ method: 'eth_accounts' }).catch(() => []);
                 if (cancelled || !accounts || accounts.length === 0) return;
@@ -374,7 +401,7 @@ function App() {
 
                 if (!cancelled) {
                     addTerminalLog(`Wallet detected: ${shortenAddress(accounts[0])}`);
-                    if (chainId !== BASE_SEPOLIA_CHAIN_ID) {
+                    if (normalizedChainId !== BASE_SEPOLIA_CHAIN_ID) {
                         addTerminalLog('Switch to Base Sepolia to send robot transactions.');
                     }
                 }
@@ -407,7 +434,7 @@ function App() {
     }, [account, isOnBaseSepolia]);
 
     const ensureBaseSepolia = async (injected) => {
-        const chainId = await injected.request({ method: 'eth_chainId' });
+        const chainId = normalizeChainId(await injected.request({ method: 'eth_chainId' }));
         setActiveChainId(chainId);
 
         if (chainId === BASE_SEPOLIA_CHAIN_ID) return;
@@ -428,7 +455,7 @@ function App() {
             }
         }
 
-        const finalChain = await injected.request({ method: 'eth_chainId' }).catch(() => null);
+        const finalChain = normalizeChainId(await injected.request({ method: 'eth_chainId' }).catch(() => null));
         setActiveChainId(finalChain);
 
         if (finalChain !== BASE_SEPOLIA_CHAIN_ID) {
@@ -531,9 +558,14 @@ function App() {
 
         try {
             const result = await interpretAction(aiPrompt);
-            addTerminalLog(`AI suggestion: ${result.action.toUpperCase()}`);
+            const action = String(result?.action || 'scan').toUpperCase();
+            const source = result?.source ? ` (${result.source})` : '';
+            addTerminalLog(`AI suggestion: ${action}${source}`);
+            if (result?.reason) {
+                addTerminalLog(`AI reason: ${result.reason}`);
+            }
 
-            const normalizedAction = String(result.action || 'scan').toLowerCase();
+            const normalizedAction = String(result?.action || 'scan').toLowerCase();
             const rewardEth = COMMAND_REWARD_MAP[normalizedAction] || COMMAND_CATALOG[0].rewardEth;
 
             setMissionProposal({
