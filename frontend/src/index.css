@@ -297,14 +297,43 @@ main {
 .task-card {
 	padding: 0.75rem 0.85rem;
 	display: flex;
+	flex-direction: column;
+	gap: 0.55rem;
+	border-radius: 12px;
+}
+
+.task-card-row {
+	display: flex;
 	justify-content: space-between;
 	gap: 0.7rem;
 	align-items: center;
-	border-radius: 12px;
 }
 
 .task-card span {
 	font-size: 0.8rem;
+}
+
+.task-link {
+	text-decoration: none;
+	font-size: 0.74rem;
+	letter-spacing: 0.02rem;
+	color: var(--primary);
+	border: 1px solid rgba(0, 242, 255, 0.4);
+	border-radius: 9px;
+	padding: 0.34rem 0.52rem;
+	width: fit-content;
+	transition: var(--transition);
+}
+
+.task-link:hover {
+	background: rgba(0, 242, 255, 0.12);
+	transform: translateY(-1px);
+}
+
+.task-link.disabled {
+	color: var(--text-dim);
+	border-color: rgba(158, 178, 201, 0.35);
+	pointer-events: none;
 }
 
 .wallet-modal-overlay {

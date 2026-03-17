@@ -127,6 +127,7 @@ function App() {
     const providerRef = useRef(null);
     const contractRef = useRef(null);
     const isConnecting = useRef(false);
+    const txHashCacheRef = useRef({});
 
     const [terminal, setTerminal] = useState([
         'System initialized',
@@ -153,6 +154,40 @@ function App() {
         document.body.style.overflow = 'auto';
     };
 
+    const findActionRequestTxHash = async (taskId) => {
+        if (!Number.isFinite(taskId) || taskId <= 0) return null;
+
+        const cached = txHashCacheRef.current[taskId];
+        if (cached !== undefined) {
+            return cached || null;
+        }
+
+        if (!providerRef.current || !contractRef.current) {
+            return null;
+        }
+
+        const latest = await providerRef.current.getBlockNumber();
+        const step = 9999;
+        const maxWindows = 36;
+        const filter = contractRef.current.filters.ActionRequested(taskId, null);
+
+        for (let i = 0; i < maxWindows; i++) {
+            const toBlock = latest - (i * step);
+            if (toBlock < 0) break;
+
+            const fromBlock = Math.max(0, toBlock - step + 1);
+            const logs = await contractRef.current.queryFilter(filter, fromBlock, toBlock);
+            if (logs.length > 0) {
+                const txHash = logs[0].transactionHash;
+                txHashCacheRef.current[taskId] = txHash;
+                return txHash;
+            }
+        }
+
+        txHashCacheRef.current[taskId] = '';
+        return null;
+    };
+
     const loadTasks = async () => {
         if (!contractRef.current) return;
         try {
@@ -176,7 +211,28 @@ function App() {
                 });
             }
 
-            setTasks(fetched);
+            const unresolvedTaskIds = fetched
+                .map((task) => task.id)
+                .filter((id) => txHashCacheRef.current[id] === undefined);
+
+            for (const taskId of unresolvedTaskIds) {
+                try {
+                    await findActionRequestTxHash(taskId);
+                } catch (error) {
+                    console.warn(`Task ${taskId} tx lookup failed:`, getErrorMessage(error));
+                }
+            }
+
+            const hydrated = fetched.map((task) => {
+                const txHash = txHashCacheRef.current[task.id] || null;
+                return {
+                    ...task,
+                    txHash,
+                    txLink: txHash ? `https://sepolia.basescan.org/tx/${txHash}` : null
+                };
+            });
+
+            setTasks(hydrated);
         } catch (error) {
             console.warn('Task sync failed:', getErrorMessage(error));
         }
@@ -610,8 +666,17 @@ function App() {
                     <div className="task-list">
                         {tasks.map((task) => (
                             <div key={task.id} className="task-card glass">
-                                <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
-                                <span>{ethers.formatEther(task.reward)} {TESTNET_TOKEN_SYMBOL}</span>
+                                <div className="task-card-row">
+                                    <span>#{task.id} <strong>{task.action.toUpperCase()}</strong></span>
+                                    <span>{ethers.formatEther(task.reward)} {TESTNET_TOKEN_SYMBOL}</span>
+                                </div>
+                                {task.txLink ? (
+                                    <a className="task-link" href={task.txLink} target="_blank" rel="noreferrer">
+                                        View On-Chain Tx
+                                    </a>
+                                ) : (
+                                    <span className="task-link disabled">Tx link syncing...</span>
+                                )}
                             </div>
                         ))}
                     </div>
