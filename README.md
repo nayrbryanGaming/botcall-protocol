@@ -1,319 +1,199 @@
-🤖 BOT-CALL Protocol
+# BOT-CALL Protocol
+## The Economic Layer for Robots
 
-Decentralized Agentic Robotics & Economic Coordination Layer
+[![Tests](https://github.com/nayrbryangaming/botcall-protocol/actions/workflows/test.yml/badge.svg)](https://github.com/nayrbryangaming/botcall-protocol/actions/workflows/test.yml)
+![Status](https://img.shields.io/badge/Status-MVP%20(Testnet)-16a34a)
+![Network](https://img.shields.io/badge/Network-Base%20Sepolia-0052FF)
+![License](https://img.shields.io/badge/License-MIT-111111)
 
-«BOT-CALL is an open protocol that enables robots and AI agents to receive blockchain payments for performing real-world actions through a pay-per-action economic model.»
+> BOT-CALL is a decentralized protocol enabling robots and AI agents to accept tasks, execute actions, and receive on-chain payments through a pay-per-action model.
 
----
+## Live Links
 
-🌍 Overview
+- Demo: https://botcall-protocol.vercel.app
+- Repository: https://github.com/nayrbryangaming/botcall-protocol
+- Contract (Base Sepolia): https://sepolia.basescan.org/address/0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1
 
-Robots today can execute tasks - but they cannot participate in economic systems.
+## Problem
 
-There is no standardized way for robots to:
+Robots can execute tasks, but they cannot yet participate in open economic systems.
 
-- accept decentralized tasks
-- verify completion
-- receive trustless payments
+There is no standard trustless flow to:
 
-BOT-CALL solves this.
+- Accept decentralized jobs
+- Verify completion
+- Receive automatic payment
 
-We introduce a universal economic interface for robotics, enabling:
+## Solution
 
-- on-chain task requests
-- autonomous robotic execution
-- automatic payment settlement
+BOT-CALL introduces a pay-per-action economic interface for robotics:
 
----
+- On-chain task requests
+- Autonomous execution
+- Automatic payment settlement
 
-⚡ Core Concept
+## System Flow
 
-🧠 Pay-Per-Action Robotics
-
-Users or AI agents can:
-
-1. Submit a task request on-chain
-2. Attach a reward (ETH)
-3. Wait for execution
-
-Robotic nodes:
-
-1. Listen to blockchain events
-2. Execute the task (simulator / real robot)
-3. Submit completion
-4. Receive payment automatically
-
----
-
-🔁 System Flow
-
+```mermaid
 graph TD
-A[User / AI Agent] -->|Create Task + Deposit| B[Smart Contract]
-B -->|Emit Event| C[Robotic Node Listener]
-C -->|Execute Action| D[Robot / Simulator]
-D -->|Completion Signal| C
-C -->|Trigger Payout| B
-B -->|Release Funds| C
+    A[User or AI Agent] -->|Create Task + Deposit| B[Smart Contract]
+    B -->|Emit Event| C[Robotic Node]
+    C -->|Execute Action| D[Robot or Simulator]
+    D -->|Completion Signal| C
+    C -->|Trigger Payout| B
+    B -->|Release Funds| C
+```
 
----
+## Architecture
 
-🏗️ Architecture
+1. Smart Contract (On-chain): task creation, escrow payment, and reward release.
+2. Robotics Node (Off-chain): listens to blockchain events, executes commands, and triggers completion.
+3. AI Layer: natural language to action mapping.
+4. Frontend: dashboard UI and wallet interaction.
 
-1. Smart Contract Layer (On-chain)
+## Tech Stack
 
-- Task creation & escrow
-- Reward locking
-- Payment release logic
+| Layer | Tech |
+| --- | --- |
+| Blockchain | Base Sepolia |
+| Smart Contract | Solidity + Hardhat |
+| Backend | Node.js + Ethers.js |
+| Frontend | React + Vite |
+| AI | Groq (Llama 3) |
+| Deployment | Vercel |
 
-2. Robotics Execution Layer (Off-chain)
+## Quick Start (2 Minutes)
 
-- Listener node (Node.js)
-- Event monitoring
-- Command execution (simulator / ROS)
-
-3. AI Interface Layer
-
-- Natural language -> action mapping
-- Command generation
-
-4. Frontend Interface
-
-- Dashboard (React + Vite)
-- Wallet interaction (MetaMask)
-
----
-
-🛠️ Tech Stack
-
-Layer| Tech
-Blockchain| Base Sepolia (L2)
-Smart Contract| Solidity + Hardhat
-Frontend| React + Vite
-Backend| Node.js + Ethers.js
-AI| Groq (Llama 3)
-Deployment| Vercel
-CI/CD| GitHub Actions
-
----
-
-🚀 Live Demo
-
-- 🌐 Frontend: https://botcall-protocol.vercel.app
-- 💻 GitHub: https://github.com/nayrbryangaming/botcall-protocol
-- 🔗 Contract: https://sepolia.basescan.org/address/0x408B7c870Ce7bd5Db3FBF92eDAA99C7b5e7AdDD1
-
----
-
-🔬 Current Prototype
-
-Status: MVP (Testnet)
-
-✅ Features Implemented
-
-- On-chain task creation
-- Escrow payment system
-- Robotics listener node
-- Simulator-based execution
-- Automatic payout
-
-🔁 Executed Commands
-
-- SCAN
-- MOVE
-- DOCK
-- MAP
-- STOP
-- INSPECT
-- PICK
-
-📊 On-chain Activity
-
-- Tasks executed: 7+
-- Network: Base Sepolia
-- End-to-end flow validated:
-	request -> execution -> settlement
-
----
-
-⚙️ Installation
-
-1. Clone Repository
-
+```bash
 git clone https://github.com/nayrbryangaming/botcall-protocol.git
 cd botcall-protocol
-
----
-
-2. Install Dependencies
-
 npm install
+```
 
----
+Create `.env` in project root:
 
-3. Environment Setup
-
-Create ".env" file:
-
-PRIVATE_KEY=your_wallet_private_key
+```env
+PRIVATE_KEY=your_private_key
 BASE_SEPOLIA_RPC_URL=https://sepolia.base.org
 CONTRACT_ADDRESS=your_contract_address
 GROQ_API_KEY=your_groq_api_key
-
 VITE_CONTRACT_ADDRESS=your_contract_address
 VITE_RPC_URL=https://sepolia.base.org
+```
 
----
+Optional: deploy your contract
 
-4. Deploy Smart Contract
-
+```bash
 npm run deploy:base-sepolia
+```
 
----
+Run the system in two terminals:
 
-5. Run Backend (Robotic Node)
-
+```bash
+# Terminal 1
 npm run backend
+```
 
----
-
-6. Run Frontend
-
+```bash
+# Terminal 2
 cd frontend
 npm run dev
+```
 
----
+## Testing (No Robot Needed)
 
-🧪 How to Test (NO REAL ROBOT REQUIRED)
+Simulator mode is built in. The backend executes actions and prints robot telemetry in the console.
 
-BOT-CALL is designed to work with or without physical robots.
+Typical flow:
 
-🟢 Simulator Mode
+1. Connect wallet
+2. Create task
+3. Confirm transaction
+4. Backend executes action
+5. Payment is released on-chain
 
-- Backend simulates robot execution
-- Logs action:
-	Executing: SCAN
-Executing: MOVE
+## Current Status
 
-🔵 Full Flow Test
+Stage: MVP (Testnet)
 
-1. Open frontend
-2. Connect MetaMask
-3. Create task
-4. Confirm transaction
-5. Watch backend execute
-6. Payment released
+- Tasks executed: 7+
+- Network: Base Sepolia
+- Commands tested: SCAN, MOVE, DOCK, MAP, STOP, INSPECT, PICK
 
----
+Validated end-to-end path:
 
-🤖 AI Integration
+`request -> execution -> payment`
 
-BOT-CALL integrates AI to:
-
-- interpret user intent
-- convert natural language -> robot commands
+## AI Integration
 
 Example:
 
-"Scan the room"
--> SCAN
+`"Scan the room" -> SCAN`
 
----
+## Roadmap
 
-🧭 Roadmap
-
-Phase 1 - MVP (Current)
+Phase 1 - MVP
 
 - Smart contract
-- Simulator execution
-- Basic frontend
+- Simulator
+- Dashboard
 
-Phase 2 - Robotics Integration
+Phase 2 - Robotics
 
-- ROS (Robot Operating System)
+- ROS integration
 - Real robot execution
-- Sensor feedback
 
-Phase 3 - Verification Layer
+Phase 3 - Verification
 
 - Proof-of-action
-- Oracle system
-- Multi-node validation
+- Oracle layer
 
 Phase 4 - Marketplace
 
 - Robot service marketplace
 - Reputation system
-- Pricing layer
 
-Phase 5 - Scale
+## Business Model
 
-- Multi-chain support
-- Cross-border robotics economy
+- 1-2% fee per task
+- Robotics marketplace
+- API access
 
----
+## Security
 
-💰 Business Model
+- Non-reentrant contracts
+- Controlled payout logic
+- Event-driven execution
 
-- 1-2% fee per task execution
-- Robotics service marketplace
-- API usage for developers
+## Vision
 
----
+Robots will not only execute tasks.
 
-🔐 Security
-
-- Non-reentrant smart contracts
-- Controlled payout execution
-- Event-driven architecture
-
----
-
-🌐 Vision
-
-We believe the future will be driven by:
-
-- AI agents
-- autonomous robots
-- decentralized infrastructure
+They will participate in the economy.
 
 BOT-CALL is building the economic layer for machines.
 
-«In the future, robots won't just execute tasks - they will transact.»
+## Contributing
 
----
+Contributors welcome:
 
-🤝 Contributing
+- Robotics engineers
+- AI developers
+- Web3 builders
 
-We welcome contributors from:
+## License
 
-- robotics engineering
-- AI / ML
-- blockchain development
+MIT
 
----
-
-📜 License
-
-MIT License
-
----
-
-👤 Author
+## Author
 
 Bryan (nayrbryanGaming)
 
 - X: https://x.com/nayrbryangaming
 - GitHub: https://github.com/nayrbryangaming
 
----
+## Final Note
 
-⚡ Final Note
+This project demonstrates a working connection between blockchain, AI, and robotic execution.
 
-BOT-CALL is currently in early-stage open-source development.
-
-This repository demonstrates a working prototype connecting:
-blockchain -> AI -> robotics execution
-
----
-
-🚀 Built for the Agentic Economy
+Built for the Agentic Economy.
