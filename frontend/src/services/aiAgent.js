@@ -5,11 +5,11 @@ const DEFAULT_ACTION = 'scan';
 const ACTION_RULES = [
     {
         action: 'dock',
-        keywords: ['dock', 'station', 'park', 'recharge', 'charge', 'sleep', 'rest', 'idle', 'standby', 'tidur', 'istirahat']
+        keywords: ['dock', 'station', 'park', 'recharge', 'charge', 'sleep', 'rest', 'idle', 'standby', 'hide', 'shelter', 'cover', 'tidur', 'istirahat', 'berlindung']
     },
     {
         action: 'return',
-        keywords: ['return', 'go back', 'back home', 'home', 'kembali', 'pulang']
+        keywords: ['return', 'go back', 'back home', 'home', 'retreat', 'fallback', 'evacuate', 'kembali', 'pulang', 'mundur']
     },
     {
         action: 'stop',
@@ -37,7 +37,7 @@ const ACTION_RULES = [
     },
     {
         action: 'move',
-        keywords: ['move', 'walk', 'go', 'advance', 'navigate', 'travel', 'maju', 'pergi', 'menuju']
+        keywords: ['move', 'walk', 'go', 'advance', 'navigate', 'travel', 'run', 'sprint', 'rush', 'chase', 'escape', 'evade', 'maju', 'pergi', 'menuju', 'lari']
     },
     {
         action: 'scan',
@@ -45,10 +45,24 @@ const ACTION_RULES = [
     }
 ];
 
-const countKeywordMatches = (text, keywords) => keywords.reduce(
-    (score, keyword) => (text.includes(keyword) ? score + 1 : score),
-    0
-);
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const keywordMatched = (text, keyword) => {
+    const normalizedKeyword = String(keyword || '').toLowerCase().trim();
+    if (!normalizedKeyword) return false;
+
+    // Multi-word phrases should match as-is; single words use boundaries to avoid noisy substring hits.
+    if (normalizedKeyword.includes(' ')) {
+        return text.includes(normalizedKeyword);
+    }
+
+    const pattern = new RegExp(`\\b${escapeRegex(normalizedKeyword)}\\b`, 'i');
+    return pattern.test(text);
+};
+
+const countKeywordMatches = (text, keywords) => keywords.reduce((score, keyword) => {
+    return keywordMatched(text, keyword) ? score + 1 : score;
+}, 0);
 
 const classifyPrompt = (value = '') => {
     const prompt = String(value || '').toLowerCase().trim();
@@ -68,7 +82,7 @@ const classifyPrompt = (value = '') => {
     const winner = scored[0];
 
     if (winner && winner.score > 0) {
-        const matchedKeywords = winner.keywords.filter((keyword) => prompt.includes(keyword)).slice(0, 3);
+        const matchedKeywords = winner.keywords.filter((keyword) => keywordMatched(prompt, keyword)).slice(0, 3);
         return {
             action: winner.action,
             reason: `Mapped by local classifier (${matchedKeywords.join(', ') || winner.action}).`
